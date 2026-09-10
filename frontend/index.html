@@ -19,7 +19,7 @@
             <div class="brand-icon">🛡</div>
             <div>
                 <h1>CIPHER SENTINEL // LAW ENFORCEMENT DISPATCH</h1>
-                <p>NCRP 1930 Cash-Out Intercept Radar • Ahmedabad Sector D3</p>
+                <p>Transaction-Graph Trace & Cash-Out Intercept Radar • Ahmedabad Hub D3</p>
             </div>
         </div>
         <div class="top-status">
@@ -76,58 +76,78 @@
         <!-- RIGHT: OPERATIONAL DISPATCH CONSOLE -->
         <aside class="right-panel">
 
-            <!-- STAGE 1: JURY SIMULATION SANDBOX & FEED -->
+            <!-- STAGE 1: FUND-FLOW TRACE & INGESTION -->
             <section class="card">
-                <div class="stage-tag">STAGE 1 // JURY TEST SANDBOX & NCRP FEED</div>
+                <div class="stage-tag">STAGE 1 // TRANSACTION GRAPH & FUND-FLOW TRACE</div>
 
-                <div class="sandbox-grid">
-                    <div class="sandbox-field">
-                        <label>STOLEN AMOUNT: <span id="sandbox-amount-val">₹48,500</span></label>
-                        <input type="range" id="sandbox-amount" min="10000" max="150000" step="2500" value="48500">
+                <!-- Visual Transaction Fund-Flow Chain -->
+                <div class="fund-flow-container">
+                    <div class="fund-node">
+                        <span class="node-badge victim">VICTIM</span>
+                        <strong id="flow-victim-city">Mumbai</strong>
+                        <small>Debited Node</small>
                     </div>
+                    <div class="fund-arrow" id="flow-arrow-amt">──₹85k──►</div>
+                    <div class="fund-node">
+                        <span class="node-badge l1">L1 MULE</span>
+                        <strong id="flow-l1-city">Delhi</strong>
+                        <small id="flow-l1-bank">Canara Transit</small>
+                    </div>
+                    <div class="fund-arrow">──Layer──►</div>
+                    <div class="fund-node active">
+                        <span class="node-badge l2">L2 MULE</span>
+                        <strong id="flow-l2-city">Ahmedabad</strong>
+                        <small id="flow-l2-ifsc">SBIN0001234</small>
+                    </div>
+                </div>
 
+                <div class="sandbox-grid" style="margin-top: 8px;">
                     <div class="sandbox-row">
+                        <div class="sandbox-col">
+                            <label>TRANSACTION SCENARIO</label>
+                            <select id="sandbox-txn-select">
+                                <option value="TXN-8492" selected>TXN-8492: Mumbai → Delhi → Ahmedabad (SBI)</option>
+                                <option value="TXN-3104">TXN-3104: Bengaluru → Jaipur → Ahmedabad (HDFC)</option>
+                                <option value="TXN-9918">TXN-9918: Pune → Indore → Ahmedabad (ICICI)</option>
+                            </select>
+                        </div>
                         <div class="sandbox-col">
                             <label>INCIDENT TIME</label>
                             <select id="sandbox-hour">
                                 <option value="2">02:00 AM (Night Off-Peak)</option>
-                                <option value="14" selected>02:00 PM (Business Peak)</option>
-                                <option value="21">09:00 PM (Evening Surge)</option>
+                                <option value="14">02:00 PM (Business Peak)</option>
+                                <option value="21" selected>09:00 PM (Evening Surge)</option>
                             </select>
                         </div>
-                        <div class="sandbox-col">
-                            <label>VICTIM SECTOR</label>
-                            <select id="sandbox-area">
-                                <option value="navrangpura" selected>Navrangpura</option>
-                                <option value="sola">Sola / SG Highway</option>
-                                <option value="prahlad">Prahlad Nagar</option>
-                                <option value="ellisbridge">Ellisbridge</option>
-                            </select>
-                        </div>
+                    </div>
+
+                    <div class="sandbox-field">
+                        <label>STOLEN AMOUNT: <span id="sandbox-amount-val">₹85,000</span></label>
+                        <input type="range" id="sandbox-amount" min="10000" max="150000" step="2500" value="85000">
                     </div>
                 </div>
 
                 <div class="sandbox-actions">
-                    <button class="eval-btn" id="sandbox-btn">RUN LIVE MODEL INFERENCE</button>
-                    <button class="simulate-btn" id="simulate-btn">⚡ INGEST RANDOM 1930 FEED</button>
+                    <button class="eval-btn" id="sandbox-btn">TRACE FLOW & PREDICT CASH-OUT</button>
+                    <button class="simulate-btn" id="simulate-btn">⚡ INGEST 1930 NCRP STREAM</button>
                 </div>
 
                 <div class="quick-stats">
-                    <div><span>REF:</span> <b id="incident-id">NCR-8492</b></div>
-                    <div><span>AMOUNT:</span> <b class="red" id="incident-amount">₹48,500</b></div>
-                    <div><span>DB COMPLAINTS:</span> <b id="live-complaints">--</b></div>
+                    <div><span>TXN REF:</span> <b id="incident-id">TXN-8492</b></div>
+                    <div><span>AMOUNT:</span> <b class="red" id="incident-amount">₹85,000</b></div>
+                    <div><span>TERMINAL:</span> <b id="terminal-node-label">Ahmedabad</b></div>
                     <div><span>LATENCY:</span> <b>8.4ms</b></div>
                 </div>
             </section>
 
-            <!-- STAGE 2: XGBOOST FORECAST -->
+            <!-- STAGE 2: XGBOOST FORECAST (DOWNSTREAM PREDICTION) -->
             <section class="card target-card">
-                <div class="stage-tag alert">STAGE 2 // XGBOOST HOTSPOT FORECAST</div>
+                <div class="stage-tag alert">STAGE 2 // DOWNSTREAM ATM CORRIDOR FORECAST</div>
 
                 <div class="target-header">
                     <div>
-                        <h2 id="target-name">CG Road Banking Corridor</h2>
-                        <p id="target-zone">Navrangpura • High-Risk ATM Cluster</p>
+                        <h2 id="target-name">Ashram Road Banking Corridor</h2>
+                        <p id="target-zone">Ellisbridge • High-Risk Public ATM Cluster</p>
                     </div>
                     <span class="ml-badge">XGBOOST v2.4</span>
                 </div>
@@ -142,11 +162,11 @@
                         <strong class="red" id="target-fraud-prob">99.8%</strong>
                     </div>
                     <div class="metric-box">
-                        <span>EST. CASH-OUT</span>
-                        <strong id="target-cash">₹48,500</strong>
+                        <span>EST. EXTRACTION</span>
+                        <strong id="target-cash">₹85,000</strong>
                     </div>
                     <div class="metric-box">
-                        <span>EXTRACTION WINDOW</span>
+                        <span>CASH-OUT WINDOW</span>
                         <strong class="red">15–45 MIN</strong>
                     </div>
                 </div>
@@ -163,11 +183,11 @@
                     </div>
                     <div class="intercept-row">
                         <span class="label">DISTANCE TO ATM:</span>
-                        <strong id="intercept-distance">1.2 km</strong>
+                        <strong id="intercept-distance">1.55 km</strong>
                     </div>
                     <div class="intercept-row">
                         <span class="label">ESTIMATED INTERCEPT:</span>
-                        <strong class="green" id="intercept-eta">3.5 mins</strong>
+                        <strong class="green" id="intercept-eta">4.7 mins</strong>
                     </div>
                 </div>
 
@@ -203,7 +223,7 @@
                 <div class="section-title" style="margin-top: 10px;">TOP CORRIDOR RISK RANKINGS</div>
                 <div class="rank-list" id="rank-list">
                     <div class="rank-row">
-                        <span>1. Loading model ranking...</span>
+                        <span>1. Loading corridor ranking...</span>
                         <strong>--%</strong>
                     </div>
                 </div>

@@ -2,11 +2,11 @@ import math
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import Complaint, get_db, init_db
@@ -149,6 +149,209 @@ DBSCAN_HISTORICAL_CLUSTERS = [
 ]
 
 # =========================================================
+# SYNTHETIC TRANSACTION GRAPH & IFSC RESOLVER
+# =========================================================
+
+# Demonstrates synthetic multi-hop fund-flow tracing
+# Registered bank branch geography acts as the known financial node, NOT suspect physical proof.
+IFSC_HUBS = {
+    "SBIN0001234": {
+        "hub": "Ashram Road",
+        "city": "Ahmedabad",
+        "latitude": 23.0300,
+        "longitude": 72.5800,
+        "bank": "State Bank of India - Ashram Rd Branch",
+    },
+    "HDFC0004567": {
+        "hub": "CG Road",
+        "city": "Ahmedabad",
+        "latitude": 23.0225,
+        "longitude": 72.5714,
+        "bank": "HDFC Bank - Navrangpura Central",
+    },
+    "ICIC0008910": {
+        "hub": "Prahlad Nagar",
+        "city": "Ahmedabad",
+        "latitude": 23.0120,
+        "longitude": 72.5100,
+        "bank": "ICICI Bank - Corporate Road Hub",
+    },
+    "BARB0SOLAXX": {
+        "hub": "SG Highway",
+        "city": "Ahmedabad",
+        "latitude": 23.0700,
+        "longitude": 72.5170,
+        "bank": "Bank of Baroda - Sola Branch",
+    },
+}
+
+# Synthetic pre-configured multi-hop transaction sequences
+SYNTHETIC_TRANSACTION_CHAINS = {
+    "TXN-8492": {
+        "transaction_id": "TXN-8492",
+        "description": "Multi-hop Layering: Mumbai → Delhi → Ahmedabad (SBI)",
+        "amount": 85000.0,
+        "timestamp": "2026-09-11T21:02:00Z",
+        "hour": 21,
+        "victim": {
+            "location": "Mumbai",
+            "city": "Mumbai",
+            "lat": 19.0760,
+            "lng": 72.8777,
+        },
+        "l1_mule": {
+            "account_id": "MULE_L1_001",
+            "bank": "Canara Bank",
+            "ifsc": "CNRB0001092",
+            "location": "Delhi",
+            "city": "Delhi",
+            "lat": 28.6139,
+            "lng": 77.2090,
+            "amount_received": 85000.0,
+        },
+        "l2_mule": {
+            "account_id": "MULE_L2_771",
+            "bank": "SBI",
+            "ifsc": "SBIN0001234",
+            "location": "Ahmedabad",
+            "city": "Ahmedabad",
+            "lat": 23.0300,
+            "lng": 72.5800,
+            "amount_received": 85000.0,
+        },
+    },
+    "TXN-3104": {
+        "transaction_id": "TXN-3104",
+        "description": "Cross-State Layering: Bengaluru → Jaipur → Ahmedabad (HDFC)",
+        "amount": 48500.0,
+        "timestamp": "2026-09-11T14:30:00Z",
+        "hour": 14,
+        "victim": {
+            "location": "Bengaluru",
+            "city": "Bengaluru",
+            "lat": 12.9716,
+            "lng": 77.5946,
+        },
+        "l1_mule": {
+            "account_id": "MULE_L1_104",
+            "bank": "Axis Bank",
+            "ifsc": "UTIB0000211",
+            "location": "Jaipur",
+            "city": "Jaipur",
+            "lat": 26.9124,
+            "lng": 75.7873,
+            "amount_received": 48500.0,
+        },
+        "l2_mule": {
+            "account_id": "MULE_L2_402",
+            "bank": "HDFC",
+            "ifsc": "HDFC0004567",
+            "location": "Ahmedabad",
+            "city": "Ahmedabad",
+            "lat": 23.0225,
+            "lng": 72.5714,
+            "amount_received": 48500.0,
+        },
+    },
+    "TXN-9918": {
+        "transaction_id": "TXN-9918",
+        "description": "High-Value Split: Pune → Indore → Ahmedabad (ICICI)",
+        "amount": 120000.0,
+        "timestamp": "2026-09-11T02:15:00Z",
+        "hour": 2,
+        "victim": {"location": "Pune", "city": "Pune", "lat": 18.5204, "lng": 73.8567},
+        "l1_mule": {
+            "account_id": "MULE_L1_889",
+            "bank": "Kotak Mahindra",
+            "ifsc": "KKBK0000420",
+            "location": "Indore",
+            "city": "Indore",
+            "lat": 22.7196,
+            "lng": 75.8577,
+            "amount_received": 120000.0,
+        },
+        "l2_mule": {
+            "account_id": "MULE_L2_905",
+            "bank": "ICICI",
+            "ifsc": "ICIC0008910",
+            "location": "Ahmedabad",
+            "city": "Ahmedabad",
+            "lat": 23.0120,
+            "lng": 72.5100,
+            "amount_received": 120000.0,
+        },
+    },
+}
+
+
+def trace_transaction_chain(transaction_id: str) -> dict[str, Any]:
+    """Deterministic transaction tracing function for max 2-3 hops.
+
+    Follows: Victim -> L1 Mule -> L2 Terminal Mule.
+    Resolves the latest known financial node jurisdiction via IFSC.
+    """
+    chain = SYNTHETIC_TRANSACTION_CHAINS.get(
+        transaction_id, SYNTHETIC_TRANSACTION_CHAINS["TXN-8492"]
+    )
+
+    victim_city = chain["victim"]["city"]
+    l1_city = chain["l1_mule"]["city"]
+    l2_city = chain["l2_mule"]["city"]
+    l2_ifsc = chain["l2_mule"]["ifsc"]
+
+    # Resolve latest known financial node via synthetic IFSC registry
+    hub_info = IFSC_HUBS.get(
+        l2_ifsc,
+        {
+            "hub": "Ashram Road",
+            "city": "Ahmedabad",
+            "latitude": 23.0300,
+            "longitude": 72.5800,
+            "bank": "Generic Partner Hub",
+        },
+    )
+
+    fund_flow = [victim_city, l1_city, l2_city]
+    fund_flow_hops = [
+        {
+            "step": 1,
+            "node_type": "VICTIM_ACCOUNT",
+            "location": victim_city,
+            "amount": chain["amount"],
+            "entity": f"Source Victim ({victim_city})",
+        },
+        {
+            "step": 2,
+            "node_type": "L1_TRANSIT_MULE",
+            "location": l1_city,
+            "amount": chain["l1_mule"]["amount_received"],
+            "entity": f"{chain['l1_mule']['bank']} [{chain['l1_mule']['ifsc']}]",
+        },
+        {
+            "step": 3,
+            "node_type": "L2_TERMINAL_MULE",
+            "location": l2_city,
+            "amount": chain["l2_mule"]["amount_received"],
+            "entity": f"{chain['l2_mule']['bank']} [{chain['l2_mule']['ifsc']}]",
+        },
+    ]
+
+    return {
+        "transaction_id": chain["transaction_id"],
+        "amount": chain["amount"],
+        "hour": chain.get("hour", 14),
+        "fund_flow": fund_flow,
+        "fund_flow_hops": fund_flow_hops,
+        "latest_known_node": l2_city,
+        "terminal_ifsc": l2_ifsc,
+        "terminal_hub_name": hub_info["hub"],
+        "terminal_bank_branch": hub_info["bank"],
+        "terminal_lat": hub_info["latitude"],
+        "terminal_lng": hub_info["longitude"],
+    }
+
+
+# =========================================================
 # GEOSPATIAL & XAI HELPER ENGINES
 # =========================================================
 
@@ -181,7 +384,7 @@ def get_closest_patrol_unit(target_lat: float, target_lon: float) -> dict:
             min_dist = dist
             closest_unit = unit
 
-    # Urban tactical patrol velocity: 25 km/h + 1.0 min dispatch queue
+    # Tactical patrol velocity: 25 km/h + 1.0 min dispatch queue
     eta_mins = round((min_dist / 25.0) * 60.0 + 1.0, 1)
     return {
         "unit_id": closest_unit["unit_id"],
@@ -198,10 +401,9 @@ def compute_xai_attribution(amount: float, hour: int) -> list[dict]:
     is_night = 23 <= hour or hour <= 5
     is_evening = 19 <= hour < 23
 
-    # Dynamic weighting signals
     amt_score = min(max((amount - 10000) / 75000.0, 0.15), 1.0)
     time_score = 0.95 if is_night else (0.65 if is_evening else 0.30)
-    density_score = 0.70  # Commercial banking hub prior
+    density_score = 0.70
     velocity_score = 0.60 if amount > 40000 else 0.25
 
     total = amt_score + time_score + density_score + velocity_score
@@ -224,7 +426,6 @@ def compute_xai_attribution(amount: float, hour: int) -> list[dict]:
         },
     ]
 
-    # Normalize rounding error to guarantee 100% sum
     diff = 100 - sum(w["pct"] for w in weights)
     weights[0]["pct"] += diff
     return weights
@@ -233,6 +434,12 @@ def compute_xai_attribution(amount: float, hour: int) -> list[dict]:
 # =========================================================
 # SCHEMAS
 # =========================================================
+
+
+class TracePredictRequest(BaseModel):
+    transaction_id: str = "TXN-8492"
+    amount: float | None = None
+    hour: int | None = None
 
 
 class ComplaintCreate(BaseModel):
@@ -282,7 +489,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Cipher Sentinel Engine",
-    description="Operational Law Enforcement Intercept Gateway",
+    description="Transaction-Graph & Post-Prediction Tactical Intercept Gateway",
     lifespan=lifespan,
 )
 
@@ -309,6 +516,117 @@ def health():
     }
 
 
+@app.post("/api/v1/trace-predict")
+def trace_and_predict(payload: TracePredictRequest):
+    """Core Causal Pivot Endpoint.
+
+    1. Ingests cybercrime transaction ID.
+    2. Traces multi-hop fund-flow chain to L2 terminal mule node.
+    3. Resolves known financial node coordinates via IFSC routing.
+    4. Executes downstream spatial XGBoost cash-out prediction.
+    """
+    trace_info = trace_transaction_chain(payload.transaction_id)
+    resolved_amount = (
+        payload.amount if payload.amount is not None else trace_info["amount"]
+    )
+    resolved_hour = payload.hour if payload.hour is not None else trace_info["hour"]
+
+    # CRITICAL CAUSAL PIVOT: Geographic features fed to ML represent the
+    # LATEST KNOWN FINANCIAL MULE NODE, not the victim's location.
+    terminal_lat = trace_info["terminal_lat"]
+    terminal_lng = trace_info["terminal_lng"]
+
+    hotspots = deepcopy(MOCK_HOTSPOTS)
+    xai_weights = compute_xai_attribution(resolved_amount, resolved_hour)
+
+    for spot in hotspots:
+        intercept = get_closest_patrol_unit(spot["latitude"], spot["longitude"])
+        spot["nearest_unit"] = intercept["unit_name"]
+        spot["unit_id"] = intercept["unit_id"]
+        spot["distance_km"] = intercept["distance_km"]
+        spot["intercept_eta_mins"] = intercept["eta_minutes"]
+        spot["xai_factors"] = xai_weights
+
+    if not models_ready():
+        return {
+            "transaction_id": trace_info["transaction_id"],
+            "fund_flow": trace_info["fund_flow"],
+            "fund_flow_hops": trace_info["fund_flow_hops"],
+            "latest_known_node": trace_info["latest_known_node"],
+            "terminal_ifsc": trace_info["terminal_ifsc"],
+            "terminal_bank_branch": trace_info["terminal_bank_branch"],
+            "predicted_hotspot": "Ashram Road",
+            "hotspot_ranking": [],
+            "fraud_prob": 0.99,
+            "alert": True,
+            "hotspots": hotspots,
+            "source": "fallback",
+        }
+
+    try:
+        predicted_zone, confidence = predict_hotspot_zone(
+            amount=resolved_amount,
+            latitude=terminal_lat,
+            longitude=terminal_lng,
+            hour=resolved_hour,
+        )
+        predicted_hotspot = match_hotspot(MOCK_HOTSPOTS, predicted_zone)
+        ranking = predict_hotspot_ranking(
+            amount=resolved_amount,
+            latitude=terminal_lat,
+            longitude=terminal_lng,
+            hour=resolved_hour,
+        )
+        fraud_prob = predict_fraud_probability(
+            amount=resolved_amount,
+            latitude=terminal_lat,
+            longitude=terminal_lng,
+            hour=resolved_hour,
+        )
+
+        for spot in hotspots:
+            spot["source"] = "model"
+            spot["predicted_zone"] = predicted_zone
+            spot["confidence"] = confidence
+            spot["fraud_prob"] = fraud_prob
+            spot["ranking"] = ranking
+            spot["is_predicted"] = bool(
+                predicted_hotspot and spot["name"] == predicted_hotspot["name"]
+            )
+
+        return {
+            "transaction_id": trace_info["transaction_id"],
+            "fund_flow": trace_info["fund_flow"],
+            "fund_flow_hops": trace_info["fund_flow_hops"],
+            "latest_known_node": trace_info["latest_known_node"],
+            "terminal_ifsc": trace_info["terminal_ifsc"],
+            "terminal_bank_branch": trace_info["terminal_bank_branch"],
+            "predicted_hotspot": predicted_zone,
+            "confidence": confidence,
+            "hotspot_ranking": ranking,
+            "fraud_prob": fraud_prob,
+            "alert": True,
+            "hotspots": hotspots,
+            "source": "model",
+        }
+
+    except Exception as err:
+        return {
+            "transaction_id": trace_info["transaction_id"],
+            "fund_flow": trace_info["fund_flow"],
+            "fund_flow_hops": trace_info["fund_flow_hops"],
+            "latest_known_node": trace_info["latest_known_node"],
+            "terminal_ifsc": trace_info["terminal_ifsc"],
+            "predicted_hotspot": "Ashram Road",
+            "hotspot_ranking": [],
+            "fraud_prob": 0.99,
+            "alert": True,
+            "hotspots": hotspots,
+            "source": "fallback",
+            "error": str(err),
+        }
+
+
 @app.get("/api/v1/hotspots")
 def get_hotspots(
     lat: float | None = None,
@@ -320,19 +638,19 @@ def get_hotspots(
     day_of_week: int | None = Query(default=None, ge=0, le=6),
     month: int | None = Query(default=None, ge=1, le=12),
 ):
+    """Backward-compatible hotspot endpoint (defaults to L2 terminal hub)."""
     resolved_lat = (
-        latitude if latitude is not None else (lat if lat is not None else 23.0305)
+        latitude if latitude is not None else (lat if lat is not None else 23.0300)
     )
     resolved_lng = (
-        longitude if longitude is not None else (lng if lng is not None else 72.5570)
+        longitude if longitude is not None else (lng if lng is not None else 72.5800)
     )
-    resolved_amount = amount if amount is not None else 48500.0
-    resolved_hour = hour if hour is not None else 14
+    resolved_amount = amount if amount is not None else 85000.0
+    resolved_hour = hour if hour is not None else 21
 
     hotspots = deepcopy(MOCK_HOTSPOTS)
     xai_weights = compute_xai_attribution(resolved_amount, resolved_hour)
 
-    # Attach nearest PCR unit and XAI weights to all corridors
     for spot in hotspots:
         intercept = get_closest_patrol_unit(spot["latitude"], spot["longitude"])
         spot["nearest_unit"] = intercept["unit_name"]
@@ -403,7 +721,6 @@ def get_hotspots(
 
 @app.get("/api/v1/tactical-layers")
 def get_tactical_layers():
-    """Returns CCTV nodes and DBSCAN historical spatial points for map toggles."""
     return {
         "cctv_nodes": CCTV_NODES,
         "dbscan_clusters": DBSCAN_HISTORICAL_CLUSTERS,
@@ -412,12 +729,11 @@ def get_tactical_layers():
 
 @app.post("/api/v1/dispatch", response_model=DispatchResponse)
 def dispatch_intercept(payload: DispatchRequest):
-    """Executes the post-prediction countermeasure protocol."""
     intercept = get_closest_patrol_unit(payload.latitude, payload.longitude)
 
     countermeasures = {
         "tactical_dispatch": f"Intercept vector pushed to {intercept['unit_id']} Mobile Data Terminal (MDT).",
-        "banking_friction": "Advisory broadcasted to NPCI/NFS: Biometric/OTP friction enforced for high-value ATM withdrawals in 750m perimeter.",
+        "banking_friction": f"Advisory broadcasted to NPCI/NFS: Biometric/OTP friction enforced for high-value ATM withdrawals in 750m perimeter of {payload.target_name}.",
         "cctv_corridor_lock": f"Evidentiary recording locked across 6 transit junctions surrounding {payload.target_name}.",
     }
 

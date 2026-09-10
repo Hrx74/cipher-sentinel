@@ -276,6 +276,18 @@ body {
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  max-height: calc(100vh - 76px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: rgba(192, 132, 252, 0.2);
+  border-radius: 2px;
 }
 
 .card {
@@ -532,17 +544,17 @@ body {
   font-size: 11px;
 }
 
-.intercept-row .label { 
-  color: var(--text-muted); 
+.intercept-row .label {
+  color: var(--text-muted);
 }
 
-.intercept-row strong { 
-  font-family: ui-monospace, monospace; 
-  color: #ffffff; 
+.intercept-row strong {
+  font-family: ui-monospace, monospace;
+  color: #ffffff;
 }
 
 .intercept-row strong.blue,
-.intercept-row strong.green { 
+.intercept-row strong.green {
   color: #e9d5ff !important; /* Soft lavender white */
 }
 
@@ -596,9 +608,9 @@ body {
   margin: 4px 0;
 }
 
-.cm-status { 
-  color: var(--lavender); 
-  font-size: 8px; 
+.cm-status {
+  color: var(--lavender);
+  font-size: 8px;
 }
 
 /* STAGE 4: EXPLAINABLE AI (XAI) */
@@ -717,4 +729,78 @@ body {
     min-height: 440px;
     position: relative;
   }
+}
+
+/* =========================================================
+   FUND-FLOW TRACE STEPPER COMPONENT
+========================================================= */
+
+.fund-flow-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  background: rgba(18, 28, 46, 0.7);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+  border-radius: 4px;
+  padding: 8px 6px;
+  margin-bottom: 6px;
+}
+
+.fund-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 3px;
+  padding: 4px 2px;
+}
+
+.fund-node.active {
+  border-color: var(--lavender);
+  background: rgba(192, 132, 252, 0.12);
+}
+
+.node-badge {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+}
+
+.node-badge.victim {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--sky);
+}
+.node-badge.l1 {
+  background: rgba(251, 113, 133, 0.2);
+  color: var(--rose-soft);
+}
+.node-badge.l2 {
+  background: rgba(192, 132, 252, 0.3);
+  color: #ffffff;
+}
+
+.fund-node strong {
+  font-size: 11px;
+  color: #ffffff;
+}
+
+.fund-node small {
+  font-size: 8px;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+}
+
+.fund-arrow {
+  color: var(--lavender);
+  font-size: 8px;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
 }

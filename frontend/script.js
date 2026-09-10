@@ -1,31 +1,30 @@
 /* =========================================================
-   CIPHER SENTINEL - TACTICAL CONTROLLER
-   Smooth OpenStreetMap Tiles & Purple/White Dispatch Engine
+   CIPHER SENTINEL - TRANSACTION GRAPH CONTROLLER
 ========================================================= */
 
 const API_BASE = "http://127.0.0.1:8000/api/v1";
 const MAP_CENTER = [23.0305, 72.557];
 
-// Area coordinate mapping for Sandbox
-const AREA_COORDINATES = {
-  navrangpura: { lat: 23.0225, lng: 72.5714 },
-  sola: { lat: 23.07, lng: 72.517 },
-  prahlad: { lat: 23.012, lng: 72.51 },
-  ellisbridge: { lat: 23.03, lng: 72.58 },
-};
-
-// Telemetry & Feed Elements
+// UI Elements
 const currentDate = document.getElementById("current-date");
 const currentTime = document.getElementById("current-time");
-const liveComplaints = document.getElementById("live-complaints");
 const incidentAmount = document.getElementById("incident-amount");
 const incidentId = document.getElementById("incident-id");
+const terminalNodeLabel = document.getElementById("terminal-node-label");
+
+// Fund-Flow Stepper Elements
+const flowVictimCity = document.getElementById("flow-victim-city");
+const flowL1City = document.getElementById("flow-l1-city");
+const flowL1Bank = document.getElementById("flow-l1-bank");
+const flowL2City = document.getElementById("flow-l2-city");
+const flowL2Ifsc = document.getElementById("flow-l2-ifsc");
+const flowArrowAmt = document.getElementById("flow-arrow-amt");
 
 // Sandbox Elements
+const sandboxTxnSelect = document.getElementById("sandbox-txn-select");
 const sandboxAmount = document.getElementById("sandbox-amount");
 const sandboxAmountVal = document.getElementById("sandbox-amount-val");
 const sandboxHour = document.getElementById("sandbox-hour");
-const sandboxArea = document.getElementById("sandbox-area");
 const sandboxBtn = document.getElementById("sandbox-btn");
 const simulateBtn = document.getElementById("simulate-btn");
 
@@ -79,13 +78,12 @@ function updateClock() {
   }
 }
 
-// Leaflet Map Initialization with Clean OpenStreetMap
+// Leaflet Map Initialization
 function initLeafletMap() {
   if (!window.L) return;
 
   map = L.map("map").setView(MAP_CENTER, 13);
 
-  // Reliable OpenStreetMap (No Carto watermark, no API key required)
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors",
@@ -158,7 +156,7 @@ function renderXAI(xaiFactors) {
     .join("");
 }
 
-// Render Dynamic Corridor Rankings
+// Render Corridor Risk Rankings
 function renderRanking(hotspots) {
   if (!rankList || !Array.isArray(hotspots) || hotspots.length === 0) return;
 
@@ -180,8 +178,8 @@ function renderRanking(hotspots) {
     .join("");
 }
 
-// Render Hotspots & Update Cards
-function renderHotspots(hotspots, activeAmount = 48500) {
+// Render Hotspots & Hydrate Console
+function renderHotspots(hotspots, activeAmount = 85000) {
   if (
     !Array.isArray(hotspots) ||
     hotspots.length === 0 ||
@@ -208,22 +206,22 @@ function renderHotspots(hotspots, activeAmount = 48500) {
 
     const popupHtml = `
       <div style="font-family: monospace;">
-        <b style="color: #ffffff; font-size: 13px;">${spot.name}</b><br>
-        <span style="color: #94a3b8;">${spot.area}</span><br>
+        <b style="color: #ffffff; font-size: 13px;">${spot.name} Cash-Out Corridor</b><br>
+        <span style="color: #94a3b8;">${spot.area} • Monitored Hub</span><br>
         <span style="color: #64748b;">Nearest Patrol: <b style="color:#ffffff;">${spot.nearest_unit || "PCR-04"}</b></span><br>
-        <span style="color: #c084fc;">ETA: <b>${spot.intercept_eta_mins || 3.5} mins</b> (${spot.distance_km || 1.2} km)</span>
+        <span style="color: #c084fc;">ETA: <b>${spot.intercept_eta_mins || 4.7} mins</b> (${spot.distance_km || 1.55} km)</span>
       </div>
     `;
 
     if (isPredicted) {
-      // Crisp tactical radar ring: hollow with glowing lavender border
+      // Hollow dashed radar perimeter around target corridor
       L.circle([lat, lng], {
         radius: 650,
         color: "#c084fc",
         weight: 2,
         dashArray: "6, 6",
         fillColor: "#c084fc",
-        fillOpacity: 0.04, // Almost entirely clear so street names stay 100% visible
+        fillOpacity: 0.05,
       }).addTo(hotspotLayer);
     }
 
@@ -250,19 +248,64 @@ function renderHotspots(hotspots, activeAmount = 48500) {
     if (targetFraudProb)
       targetFraudProb.textContent = `${((currentPredictedSpot.fraud_prob ?? 0.998) * 100).toFixed(1)}%`;
     if (targetCash)
-      targetCash.textContent = `₹${activeAmount.toLocaleString("en-IN")}`;
+      targetCash.textContent = `₹${Number(activeAmount).toLocaleString("en-IN")}`;
 
     if (assignedUnit)
       assignedUnit.textContent =
         currentPredictedSpot.nearest_unit || "PCR Van 04 (Ellisbridge)";
     if (interceptDistance)
-      interceptDistance.textContent = `${currentPredictedSpot.distance_km || 1.2} km`;
+      interceptDistance.textContent = `${currentPredictedSpot.distance_km || 1.55} km`;
     if (interceptEta)
-      interceptEta.textContent = `${currentPredictedSpot.intercept_eta_mins || 3.5} mins`;
+      interceptEta.textContent = `${currentPredictedSpot.intercept_eta_mins || 4.7} mins`;
   }
 
   const bounds = L.latLngBounds(hotspots.map((s) => [s.latitude, s.longitude]));
   map.fitBounds(bounds.pad(0.2));
+}
+
+// Trace Fund Flow and Predict Cash-Out
+async function runTraceAndPredict(
+  txnId = "TXN-8492",
+  amount = 85000,
+  hour = 21,
+) {
+  try {
+    const res = await fetch(`${API_BASE}/trace-predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        transaction_id: txnId,
+        amount: Number(amount),
+        hour: Number(hour),
+      }),
+    });
+
+    const data = await res.json();
+
+    // Update Fund Flow Visual Stepper
+    if (Array.isArray(data.fund_flow_hops) && data.fund_flow_hops.length >= 3) {
+      if (flowVictimCity)
+        flowVictimCity.textContent = data.fund_flow_hops[0].location;
+      if (flowL1City) flowL1City.textContent = data.fund_flow_hops[1].location;
+      if (flowL1Bank) flowL1Bank.textContent = data.fund_flow_hops[1].entity;
+      if (flowL2City) flowL2City.textContent = data.fund_flow_hops[2].location;
+      if (flowL2Ifsc)
+        flowL2Ifsc.textContent = data.terminal_ifsc || "SBIN0001234";
+    }
+
+    if (incidentId) incidentId.textContent = data.transaction_id;
+    if (incidentAmount)
+      incidentAmount.textContent = `₹${Number(amount).toLocaleString("en-IN")}`;
+    if (flowArrowAmt) {
+      flowArrowAmt.textContent = `──₹${Math.round(Number(amount) / 1000)}k──►`;
+    }
+    if (terminalNodeLabel)
+      terminalNodeLabel.textContent = data.latest_known_node || "Ahmedabad";
+
+    renderHotspots(data.hotspots, amount);
+  } catch (err) {
+    console.error("Trace predict failed:", err);
+  }
 }
 
 // Load Tactical Layers (DBSCAN & CCTV)
@@ -271,7 +314,6 @@ async function loadTacticalLayers() {
     const res = await fetch(`${API_BASE}/tactical-layers`);
     const data = await res.json();
 
-    // 1. Populate DBSCAN historical cluster layer
     if (dbscanLayer && Array.isArray(data.dbscan_clusters)) {
       dbscanLayer.clearLayers();
       data.dbscan_clusters.forEach((pt) => {
@@ -289,7 +331,6 @@ async function loadTacticalLayers() {
       });
     }
 
-    // 2. Populate CCTV layer
     if (cctvLayer && Array.isArray(data.cctv_nodes)) {
       cctvLayer.clearLayers();
       data.cctv_nodes.forEach((cam) => {
@@ -312,39 +353,8 @@ async function loadTacticalLayers() {
   }
 }
 
-// Load Hotspots Query
-async function loadHotspots(
-  amount = 48500,
-  lat = 23.0305,
-  lng = 72.557,
-  hour = 14,
-) {
-  try {
-    const url = `${API_BASE}/hotspots?amount=${amount}&lat=${lat}&lng=${lng}&hour=${hour}`;
-    const res = await fetch(url);
-    const hotspots = await res.json();
-    renderHotspots(hotspots, amount);
-  } catch (err) {
-    console.error("Hotspots fetch failed:", err);
-  }
-}
-
-// Load Database Complaint Count
-async function loadComplaints() {
-  try {
-    const res = await fetch(`${API_BASE}/complaints`);
-    const complaints = await res.json();
-    if (liveComplaints && Array.isArray(complaints)) {
-      liveComplaints.textContent = String(complaints.length);
-    }
-  } catch (err) {
-    console.error("Complaints fetch failed:", err);
-  }
-}
-
-// Interactive Event Listeners
+// Setup Interactive Handlers
 function setupEventListeners() {
-  // Amount Slider Live Preview
   if (sandboxAmount && sandboxAmountVal) {
     sandboxAmount.addEventListener("input", (e) => {
       const val = Number(e.target.value);
@@ -352,22 +362,34 @@ function setupEventListeners() {
     });
   }
 
-  // Sandbox Live Inference Trigger
+  // Transaction Scenario Dropdown Switcher
+  if (sandboxTxnSelect) {
+    sandboxTxnSelect.addEventListener("change", (e) => {
+      const selected = e.target.value;
+      if (selected === "TXN-8492") {
+        sandboxAmount.value = "85000";
+        sandboxHour.value = "21";
+      } else if (selected === "TXN-3104") {
+        sandboxAmount.value = "48500";
+        sandboxHour.value = "14";
+      } else if (selected === "TXN-9918") {
+        sandboxAmount.value = "120000";
+        sandboxHour.value = "2";
+      }
+      sandboxAmountVal.textContent = `₹${Number(sandboxAmount.value).toLocaleString("en-IN")}`;
+    });
+  }
+
+  // Run Trace & Prediction
   if (sandboxBtn) {
     sandboxBtn.addEventListener("click", async () => {
+      const txnId = sandboxTxnSelect ? sandboxTxnSelect.value : "TXN-8492";
       const amt = Number(sandboxAmount.value);
       const hr = Number(sandboxHour.value);
-      const areaKey = sandboxArea.value;
-      const coords = AREA_COORDINATES[areaKey] || AREA_COORDINATES.navrangpura;
 
-      if (incidentAmount)
-        incidentAmount.textContent = `₹${amt.toLocaleString("en-IN")}`;
-      if (incidentId)
-        incidentId.textContent = `SBX-${Math.floor(1000 + Math.random() * 9000)}`;
-
-      sandboxBtn.textContent = "COMPUTING INFERENCE...";
-      await loadHotspots(amt, coords.lat, coords.lng, hr);
-      sandboxBtn.textContent = "RUN LIVE MODEL INFERENCE";
+      sandboxBtn.textContent = "TRACING FUND FLOW...";
+      await runTraceAndPredict(txnId, amt, hr);
+      sandboxBtn.textContent = "TRACE FLOW & PREDICT CASH-OUT";
     });
   }
 
@@ -407,7 +429,7 @@ function setupEventListeners() {
     });
   }
 
-  // Intercept Dispatch Handler (Purple/Lavender Theme)
+  // Intercept Dispatch
   if (dispatchBtn) {
     dispatchBtn.addEventListener("click", async () => {
       if (!currentPredictedSpot) return;
@@ -427,7 +449,6 @@ function setupEventListeners() {
           }),
         });
 
-        // Draw soft lavender intercept line from PCR Van 04
         if (vectorLineLayer) {
           vectorLineLayer.clearLayers();
           const pcrCoords = [23.028, 72.565];
@@ -450,9 +471,9 @@ function setupEventListeners() {
         if (mapDispatchBanner) mapDispatchBanner.style.display = "block";
 
         dispatchBtn.textContent = "✓ INTERCEPT VECTOR DISPATCHED";
-        dispatchBtn.style.background =
-          "linear-gradient(135deg, #7c3aed 0%, #581c87 100%)";
+        dispatchBtn.style.background = "rgba(192, 132, 252, 0.25)";
         dispatchBtn.style.borderColor = "#c084fc";
+        dispatchBtn.style.boxShadow = "0 0 12px rgba(192, 132, 252, 0.35)";
         dispatchBtn.style.color = "#ffffff";
       } catch (err) {
         console.error("Dispatch failed:", err);
@@ -462,40 +483,42 @@ function setupEventListeners() {
     });
   }
 
-  // Random 1930 Feed Simulation
+  // Simulate Random 1930 Ingest
   if (simulateBtn) {
     simulateBtn.addEventListener("click", async () => {
       simulateBtn.disabled = true;
       simulateBtn.textContent = "INGESTING 1930 FEED...";
 
-      const newId = `NCR-${Math.floor(1000 + Math.random() * 9000)}`;
-      const newAmount = Math.floor(40000 + Math.random() * 40000);
+      // Randomly pick one of the three preconfigured multi-hop scenarios
+      const scenarios = ["TXN-8492", "TXN-3104", "TXN-9918"];
+      const randomTxn = scenarios[Math.floor(Math.random() * scenarios.length)];
+      const newAmount = Math.floor(40000 + Math.random() * 50000);
+      const randomHour = [2, 14, 21][Math.floor(Math.random() * 3)];
+      const uniqueComplaintId = `${randomTxn}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      if (sandboxTxnSelect) sandboxTxnSelect.value = randomTxn;
+      if (sandboxAmount) sandboxAmount.value = String(newAmount);
+      if (sandboxAmountVal)
+        sandboxAmountVal.textContent = `₹${newAmount.toLocaleString("en-IN")}`;
+      if (sandboxHour) sandboxHour.value = String(randomHour);
 
       try {
         await fetch(`${API_BASE}/complaints`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            complaint_id: newId,
-            victim_location: "Navrangpura, Ahmedabad",
+            complaint_id: uniqueComplaintId,
+            victim_location: "Multi-Hop NCRP Ingest",
             amount: newAmount,
           }),
         });
 
-        if (incidentId) incidentId.textContent = newId;
-        if (incidentAmount)
-          incidentAmount.textContent = `₹${newAmount.toLocaleString("en-IN")}`;
-
-        await Promise.all([
-          loadHotspots(newAmount, 23.0305, 72.557, 14),
-          loadComplaints(),
-        ]);
-
-        simulateBtn.textContent = "⚡ INGEST RANDOM 1930 FEED";
+        await runTraceAndPredict(randomTxn, newAmount, randomHour);
+        simulateBtn.textContent = "⚡ INGEST 1930 NCRP STREAM";
         simulateBtn.disabled = false;
       } catch (err) {
         console.error("Simulation error:", err);
-        simulateBtn.textContent = "RETRY SIMULATION";
+        simulateBtn.textContent = "RETRY INGEST";
         simulateBtn.disabled = false;
       }
     });
@@ -507,7 +530,7 @@ async function initDashboard() {
   updateClock();
   initLeafletMap();
   setupEventListeners();
-  await Promise.all([loadHotspots(), loadTacticalLayers(), loadComplaints()]);
+  await Promise.all([runTraceAndPredict(), loadTacticalLayers()]);
 }
 
 if (document.readyState === "loading") {
