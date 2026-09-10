@@ -1,5 +1,6 @@
 /* =========================================================
    CIPHER SENTINEL - TACTICAL CONTROLLER
+   Smooth OpenStreetMap Tiles & Purple/White Dispatch Engine
 ========================================================= */
 
 const API_BASE = "http://127.0.0.1:8000/api/v1";
@@ -13,7 +14,7 @@ const AREA_COORDINATES = {
   ellisbridge: { lat: 23.03, lng: 72.58 },
 };
 
-// UI Elements
+// Telemetry & Feed Elements
 const currentDate = document.getElementById("current-date");
 const currentTime = document.getElementById("current-time");
 const liveComplaints = document.getElementById("live-complaints");
@@ -78,12 +79,13 @@ function updateClock() {
   }
 }
 
-// Leaflet Map Initialization
+// Leaflet Map Initialization with Clean OpenStreetMap
 function initLeafletMap() {
   if (!window.L) return;
 
   map = L.map("map").setView(MAP_CENTER, 13);
 
+  // Reliable OpenStreetMap (No Carto watermark, no API key required)
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors",
@@ -123,13 +125,13 @@ function renderPoliceUnits() {
     const icon = L.divIcon({
       className: "police-marker",
       html: "🚓",
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
     });
 
     L.marker([unit.lat, unit.lng], { icon })
       .bindPopup(
-        `<b>${unit.name}</b><br>ID: ${unit.id}<br>Status: Standby Intercept`,
+        `<b style="color:#ffffff;">${unit.name}</b><br><span style="color:#94a3b8;">ID: ${unit.id}</span><br><span style="color:#c084fc;">Status: Standby Intercept</span>`,
       )
       .addTo(policeLayer);
   });
@@ -206,29 +208,30 @@ function renderHotspots(hotspots, activeAmount = 48500) {
 
     const popupHtml = `
       <div style="font-family: monospace;">
-        <b style="color: #f8fafc; font-size: 12px;">${spot.name}</b><br>
+        <b style="color: #ffffff; font-size: 13px;">${spot.name}</b><br>
         <span style="color: #94a3b8;">${spot.area}</span><br>
-        <span style="color: #64748b;">Nearest Unit: <b>${spot.nearest_unit || "PCR-04"}</b></span><br>
-        <span style="color: #22c55e;">ETA: <b>${spot.intercept_eta_mins || 3.5} mins</b> (${spot.distance_km || 1.2} km)</span>
+        <span style="color: #64748b;">Nearest Patrol: <b style="color:#ffffff;">${spot.nearest_unit || "PCR-04"}</b></span><br>
+        <span style="color: #c084fc;">ETA: <b>${spot.intercept_eta_mins || 3.5} mins</b> (${spot.distance_km || 1.2} km)</span>
       </div>
     `;
 
     if (isPredicted) {
+      // Crisp tactical radar ring: hollow with glowing lavender border
       L.circle([lat, lng], {
         radius: 650,
-        color: "#e11d48",
-        opacity: 0.9,
-        fillColor: "#e11d48",
-        fillOpacity: 0.18,
-        weight: 1.5,
+        color: "#c084fc",
+        weight: 2,
+        dashArray: "6, 6",
+        fillColor: "#c084fc",
+        fillOpacity: 0.04, // Almost entirely clear so street names stay 100% visible
       }).addTo(hotspotLayer);
     }
 
     const marker = L.circleMarker([lat, lng], {
-      radius: isPredicted ? 9 : 6,
+      radius: isPredicted ? 9 : 5,
       color: isPredicted ? "#ffffff" : "#64748b",
       weight: isPredicted ? 2 : 1,
-      fillColor: isPredicted ? "#e11d48" : "#334155",
+      fillColor: isPredicted ? "#c084fc" : "#1e293b",
       fillOpacity: 1,
     }).addTo(hotspotLayer);
 
@@ -274,7 +277,7 @@ async function loadTacticalLayers() {
       data.dbscan_clusters.forEach((pt) => {
         L.circleMarker([pt.lat, pt.lng], {
           radius: 5,
-          color: "#0284c7",
+          color: "#38bdf8",
           fillColor: "#38bdf8",
           fillOpacity: pt.density || 0.7,
           weight: 1,
@@ -339,7 +342,7 @@ async function loadComplaints() {
   }
 }
 
-// Interactive Handlers
+// Interactive Event Listeners
 function setupEventListeners() {
   // Amount Slider Live Preview
   if (sandboxAmount && sandboxAmountVal) {
@@ -349,7 +352,7 @@ function setupEventListeners() {
     });
   }
 
-  // Sandbox Live Inference Run
+  // Sandbox Live Inference Trigger
   if (sandboxBtn) {
     sandboxBtn.addEventListener("click", async () => {
       const amt = Number(sandboxAmount.value);
@@ -404,7 +407,7 @@ function setupEventListeners() {
     });
   }
 
-  // Intercept Dispatch Handler
+  // Intercept Dispatch Handler (Purple/Lavender Theme)
   if (dispatchBtn) {
     dispatchBtn.addEventListener("click", async () => {
       if (!currentPredictedSpot) return;
@@ -424,7 +427,7 @@ function setupEventListeners() {
           }),
         });
 
-        // Draw tactical intercept line from PCR Van 04
+        // Draw soft lavender intercept line from PCR Van 04
         if (vectorLineLayer) {
           vectorLineLayer.clearLayers();
           const pcrCoords = [23.028, 72.565];
@@ -434,7 +437,7 @@ function setupEventListeners() {
           ];
 
           const line = L.polyline([pcrCoords, targetCoords], {
-            color: "#38bdf8",
+            color: "#c084fc",
             weight: 3,
             dashArray: "6, 8",
             opacity: 0.95,
@@ -446,8 +449,11 @@ function setupEventListeners() {
         if (countermeasuresPanel) countermeasuresPanel.style.display = "block";
         if (mapDispatchBanner) mapDispatchBanner.style.display = "block";
 
-        dispatchBtn.textContent = "✅ INTERCEPT VECTOR DISPATCHED";
-        dispatchBtn.style.background = "#15803d";
+        dispatchBtn.textContent = "✓ INTERCEPT VECTOR DISPATCHED";
+        dispatchBtn.style.background =
+          "linear-gradient(135deg, #7c3aed 0%, #581c87 100%)";
+        dispatchBtn.style.borderColor = "#c084fc";
+        dispatchBtn.style.color = "#ffffff";
       } catch (err) {
         console.error("Dispatch failed:", err);
         dispatchBtn.textContent = "RETRY DISPATCH";
