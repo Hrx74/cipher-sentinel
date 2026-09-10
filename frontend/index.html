@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cipher Sentinel // Tactical Intercept Command</title>
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- Gov-Tech Console CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- TOPBAR / TELEMETRY -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">🛡</div>
+            <div>
+                <h1>CIPHER SENTINEL // LAW ENFORCEMENT DISPATCH</h1>
+                <p>NCRP 1930 Cash-Out Intercept Radar • Ahmedabad Sector D3</p>
+            </div>
+        </div>
+        <div class="top-status">
+            <span class="live-dot"></span>
+            <span class="live-text">RADAR ACTIVE</span>
+            <span class="separator">|</span>
+            <span id="current-date">--</span>
+            <span id="current-time">--</span>
+        </div>
+    </header>
+
+    <!-- DASHBOARD WORKSPACE -->
+    <main class="dashboard">
+
+        <!-- LEFT: TACTICAL RADAR MAP -->
+        <section class="map-panel">
+            <div id="map"></div>
+
+            <div class="map-label">
+                <span class="live-dot"></span>
+                AHMEDABAD TACTICAL RADAR
+            </div>
+
+            <!-- Map Layer Toggles -->
+            <div class="map-controls">
+                <button class="layer-btn active" id="layer-radar">● RADAR</button>
+                <button class="layer-btn" id="layer-dbscan">● DBSCAN CLUSTERS</button>
+                <button class="layer-btn" id="layer-cctv">📹 CCTV GRID</button>
+            </div>
+
+            <!-- Intercept Active Notification -->
+            <div id="map-dispatch-banner" class="map-dispatch-banner">
+                🚨 INTERCEPT VECTOR ACTIVE: Route locked to target corridor
+            </div>
+
+            <!-- Map Legend -->
+            <div class="map-legend">
+                <div class="legend-title">RADAR ENTITIES</div>
+                <div class="legend-item">
+                    <span class="legend-dot high"></span>
+                    <span>Predicted Target Zone (&gt;80%)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot medium"></span>
+                    <span>Monitored Corridor (50–80%)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="police-icon">🚓</span>
+                    <span>Active Patrol Unit (PCR)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: OPERATIONAL DISPATCH CONSOLE -->
+        <aside class="right-panel">
+
+            <!-- STAGE 1: JURY SIMULATION SANDBOX & FEED -->
+            <section class="card">
+                <div class="stage-tag">STAGE 1 // JURY TEST SANDBOX & NCRP FEED</div>
+
+                <div class="sandbox-grid">
+                    <div class="sandbox-field">
+                        <label>STOLEN AMOUNT: <span id="sandbox-amount-val">₹48,500</span></label>
+                        <input type="range" id="sandbox-amount" min="10000" max="150000" step="2500" value="48500">
+                    </div>
+
+                    <div class="sandbox-row">
+                        <div class="sandbox-col">
+                            <label>INCIDENT TIME</label>
+                            <select id="sandbox-hour">
+                                <option value="2">02:00 AM (Night Off-Peak)</option>
+                                <option value="14" selected>02:00 PM (Business Peak)</option>
+                                <option value="21">09:00 PM (Evening Surge)</option>
+                            </select>
+                        </div>
+                        <div class="sandbox-col">
+                            <label>VICTIM SECTOR</label>
+                            <select id="sandbox-area">
+                                <option value="navrangpura" selected>Navrangpura</option>
+                                <option value="sola">Sola / SG Highway</option>
+                                <option value="prahlad">Prahlad Nagar</option>
+                                <option value="ellisbridge">Ellisbridge</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sandbox-actions">
+                    <button class="eval-btn" id="sandbox-btn">RUN LIVE MODEL INFERENCE</button>
+                    <button class="simulate-btn" id="simulate-btn">⚡ INGEST RANDOM 1930 FEED</button>
+                </div>
+
+                <div class="quick-stats">
+                    <div><span>REF:</span> <b id="incident-id">NCR-8492</b></div>
+                    <div><span>AMOUNT:</span> <b class="red" id="incident-amount">₹48,500</b></div>
+                    <div><span>DB COMPLAINTS:</span> <b id="live-complaints">--</b></div>
+                    <div><span>LATENCY:</span> <b>8.4ms</b></div>
+                </div>
+            </section>
+
+            <!-- STAGE 2: XGBOOST FORECAST -->
+            <section class="card target-card">
+                <div class="stage-tag alert">STAGE 2 // XGBOOST HOTSPOT FORECAST</div>
+
+                <div class="target-header">
+                    <div>
+                        <h2 id="target-name">CG Road Banking Corridor</h2>
+                        <p id="target-zone">Navrangpura • High-Risk ATM Cluster</p>
+                    </div>
+                    <span class="ml-badge">XGBOOST v2.4</span>
+                </div>
+
+                <div class="target-grid">
+                    <div class="metric-box">
+                        <span>MODEL CONFIDENCE</span>
+                        <strong id="target-confidence">100%</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span>FRAUD PROBABILITY</span>
+                        <strong class="red" id="target-fraud-prob">99.8%</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span>EST. CASH-OUT</span>
+                        <strong id="target-cash">₹48,500</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span>EXTRACTION WINDOW</span>
+                        <strong class="red">15–45 MIN</strong>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STAGE 3: POST-PREDICTION COUNTERMEASURES (DISPATCH) -->
+            <section class="card dispatch-card">
+                <div class="stage-tag action">STAGE 3 // POST-PREDICTION COUNTERMEASURES</div>
+
+                <div class="intercept-details">
+                    <div class="intercept-row">
+                        <span class="label">ASSIGNED PATROL:</span>
+                        <strong class="blue" id="assigned-unit">PCR Van 04 (Ellisbridge)</strong>
+                    </div>
+                    <div class="intercept-row">
+                        <span class="label">DISTANCE TO ATM:</span>
+                        <strong id="intercept-distance">1.2 km</strong>
+                    </div>
+                    <div class="intercept-row">
+                        <span class="label">ESTIMATED INTERCEPT:</span>
+                        <strong class="green" id="intercept-eta">3.5 mins</strong>
+                    </div>
+                </div>
+
+                <button class="dispatch-btn" id="dispatch-btn">
+                    🚨 INITIATE INTERCEPT DISPATCH
+                </button>
+
+                <!-- Active Countermeasures Details -->
+                <div class="countermeasures-panel" id="countermeasures-panel">
+                    <div class="cm-title">ACTIVE COUNTERMEASURE PROTOCOLS</div>
+                    <div class="cm-item">
+                        <span class="cm-status">●</span>
+                        <span><b>Patrol MDT Vector:</b> Route coordinates pushed to vehicle terminal</span>
+                    </div>
+                    <div class="cm-item">
+                        <span class="cm-status">●</span>
+                        <span><b>Banking Friction Advisory:</b> 750m perimeter ATM OTP verification requested</span>
+                    </div>
+                    <div class="cm-item">
+                        <span class="cm-status">●</span>
+                        <span><b>CCTV Corridor Lock:</b> Junction cameras tagged for evidentiary audit</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STAGE 4: EXPLAINABLE AI (XAI) & CORRIDOR RANKINGS -->
+            <section class="card">
+                <div class="section-title">EXPLAINABLE AI (XAI) // FEATURE ATTRIBUTION</div>
+                <div class="xai-container" id="xai-bars-container">
+                    <!-- Dynamic XAI Bars rendered via script.js -->
+                </div>
+
+                <div class="section-title" style="margin-top: 10px;">TOP CORRIDOR RISK RANKINGS</div>
+                <div class="rank-list" id="rank-list">
+                    <div class="rank-row">
+                        <span>1. Loading model ranking...</span>
+                        <strong>--%</strong>
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+    </main>
+
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Tactical Dispatch Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
