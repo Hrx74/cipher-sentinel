@@ -26,16 +26,91 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   background: var(--canvas);
   color: var(--text-pearl);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+/* TRIAGE BADGES & TIER BUTTONS */
+.triage-badge-container {
+  margin: 6px 0 8px;
+}
+
+.triage-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-family: ui-monospace, monospace;
+}
+
+.triage-badge.intercept {
+  background: rgba(251, 113, 133, 0.15);
+  border: 1px solid #fb7185;
+  color: #fb7185;
+}
+
+.triage-badge.surveillance {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid #fbbf24;
+  color: #fbbf24;
+}
+
+.triage-badge.monitor {
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid #34d399;
+  color: #34d399;
+}
+
+.triage-reason {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.dispatch-btn.tier-intercept {
+  background: rgba(192, 132, 252, 0.15);
+  border: 1px solid var(--lavender);
+  color: #ffffff;
+}
+
+.dispatch-btn.tier-intercept:hover {
+  background: var(--lavender);
+  color: #090d16;
+}
+
+.dispatch-btn.tier-surveillance {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid #fbbf24;
+  color: #fbbf24;
+}
+
+.dispatch-btn.tier-surveillance:hover {
+  background: #fbbf24;
+  color: #090d16;
+}
+
+.dispatch-btn.tier-monitor {
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--text-faint);
+  cursor: not-allowed;
 }
 
 /* TOPBAR */
@@ -137,7 +212,8 @@ html, body {
 }
 
 .leaflet-tile {
-  filter: brightness(0.6) invert(1) contrast(1.05) hue-rotate(200deg) saturate(0.2) !important;
+  filter: brightness(0.6) invert(1) contrast(1.05) hue-rotate(200deg)
+    saturate(0.2) !important;
 }
 
 .map-label {
@@ -242,8 +318,12 @@ html, body {
   height: 8px;
   border-radius: 2px;
 }
-.legend-dot.high { background: var(--lavender); }
-.legend-dot.medium { background: var(--sky); }
+.legend-dot.high {
+  background: var(--lavender);
+}
+.legend-dot.medium {
+  background: var(--sky);
+}
 
 /* RIGHT PANEL & CARDS */
 .right-panel {
@@ -339,13 +419,35 @@ html, body {
   margin-bottom: 2px;
 }
 
-.node-badge.victim { background: rgba(56, 189, 248, 0.2); color: var(--sky); }
-.node-badge.l1 { background: rgba(251, 113, 133, 0.2); color: var(--rose-soft); }
-.node-badge.l2 { background: rgba(192, 132, 252, 0.3); color: #ffffff; }
+.node-badge.victim {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--sky);
+}
+.node-badge.l1 {
+  background: rgba(251, 113, 133, 0.2);
+  color: var(--rose-soft);
+}
+.node-badge.l2 {
+  background: rgba(192, 132, 252, 0.3);
+  color: #ffffff;
+}
 
-.fund-node strong { font-size: 11px; color: #ffffff; }
-.fund-node small { font-size: 8px; color: var(--text-muted); font-family: ui-monospace, monospace; }
-.fund-arrow { color: var(--lavender); font-size: 8px; font-weight: 700; font-family: ui-monospace, monospace; white-space: nowrap; }
+.fund-node strong {
+  font-size: 11px;
+  color: #ffffff;
+}
+.fund-node small {
+  font-size: 8px;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+}
+.fund-arrow {
+  color: var(--lavender);
+  font-size: 8px;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
 
 /* CONTROLS GRID */
 .controls-grid {
@@ -444,13 +546,22 @@ html, body {
   font-size: 9px;
 }
 
-.telemetry-bar span { color: var(--text-faint); }
-.telemetry-bar b { color: var(--text-pure); font-family: ui-monospace, monospace; }
+.telemetry-bar span {
+  color: var(--text-faint);
+}
+.telemetry-bar b {
+  color: var(--text-pure);
+  font-family: ui-monospace, monospace;
+}
 
 /* TARGET & DISPATCH SECTION */
 .intercept-card {
   border-left: 3px solid var(--lavender);
-  background: linear-gradient(135deg, rgba(192, 132, 252, 0.05) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.05) 0%,
+    rgba(15, 23, 42, 0.95) 100%
+  );
 }
 
 .target-summary h2 {
@@ -523,8 +634,13 @@ html, body {
   font-size: 10px;
 }
 
-.patrol-info .label { color: var(--text-muted); }
-.patrol-info strong { font-family: ui-monospace, monospace; color: #ffffff; }
+.patrol-info .label {
+  color: var(--text-muted);
+}
+.patrol-info strong {
+  font-family: ui-monospace, monospace;
+  color: #ffffff;
+}
 
 .dispatch-btn {
   width: 100%;
@@ -572,7 +688,10 @@ html, body {
   margin: 3px 0;
 }
 
-.cm-bullet { color: var(--lavender); font-size: 8px; }
+.cm-bullet {
+  color: var(--lavender);
+  font-size: 8px;
+}
 
 /* XAI & RANKINGS */
 .xai-container {
@@ -593,8 +712,14 @@ html, body {
   font-size: 10px;
 }
 
-.xai-label { color: var(--text-muted); }
-.xai-pct { color: var(--lavender); font-family: ui-monospace, monospace; font-weight: 800; }
+.xai-label {
+  color: var(--text-muted);
+}
+.xai-pct {
+  color: var(--lavender);
+  font-family: ui-monospace, monospace;
+  font-weight: 800;
+}
 
 .xai-track {
   width: 100%;
@@ -626,13 +751,24 @@ html, body {
   font-size: 10px;
 }
 
-.rank-row:last-child { border-bottom: 0; }
-.rank-row strong { color: var(--lavender); font-family: ui-monospace, monospace; }
+.rank-row:last-child {
+  border-bottom: 0;
+}
+.rank-row strong {
+  color: var(--lavender);
+  font-family: ui-monospace, monospace;
+}
 
 /* HIGHLIGHT UTILITIES */
-.highlight-red { color: var(--rose-soft) !important; }
-.highlight-blue { color: var(--sky) !important; }
-.highlight-green { color: #e9d5ff !important; }
+.highlight-red {
+  color: var(--rose-soft) !important;
+}
+.highlight-blue {
+  color: var(--sky) !important;
+}
+.highlight-green {
+  color: #e9d5ff !important;
+}
 
 /* MAP MARKERS */
 .police-marker {
@@ -666,5 +802,11 @@ html, body {
   border: 1px solid var(--border-subtle);
 }
 
-.leaflet-popup-tip { background: #0e1526; }
-.leaflet-popup-content { margin: 8px 10px; font-size: 11px; line-height: 1.4; }
+.leaflet-popup-tip {
+  background: #0e1526;
+}
+.leaflet-popup-content {
+  margin: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+}

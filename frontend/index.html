@@ -22,13 +22,6 @@
                 <p>NCRP 1930 Fund-Flow Intelligence & Tactical ATM Cash-Out Interdiction</p>
             </div>
         </div>
-        <div class="top-status">
-            <span class="live-dot"></span>
-            <span class="live-text">TACTICAL RADAR ACTIVE</span>
-            <span class="separator">|</span>
-            <span id="current-date">--</span>
-            <span id="current-time">--</span>
-        </div>
     </header>
 
     <!-- DASHBOARD WORKSPACE -->
@@ -191,14 +184,36 @@
                     </div>
                 </div>
 
-                <button class="dispatch-btn" id="dispatch-btn">
-                    🚨 INITIATE INTERCEPT DISPATCH
+                <!-- TIERED DECISION SUPPORT BADGE -->
+                <div class="triage-badge-container">
+                    <div class="triage-badge intercept" id="triage-badge">🔴 TACTICAL INTERCEPT (P1)</div>
+                    <p class="triage-reason" id="triage-reason">High fraud severity &amp; corridor signal. Patrol vector
+                        authorized.</p>
+                </div>
+
+                <div class="patrol-assignment" id="patrol-assignment-box">
+                    <div class="patrol-info">
+                        <span class="label">ASSIGNED PATROL:</span>
+                        <strong class="highlight-blue" id="assigned-unit">PCR Van 04 (Ellisbridge)</strong>
+                    </div>
+                    <div class="patrol-info">
+                        <span class="label">TRANSIT DISTANCE:</span>
+                        <strong id="intercept-distance">1.55 km</strong>
+                    </div>
+                    <div class="patrol-info">
+                        <span class="label">INTERCEPT ETA:</span>
+                        <strong class="highlight-green" id="intercept-eta">4.7 mins</strong>
+                    </div>
+                </div>
+
+                <button class="dispatch-btn tier-intercept" id="dispatch-btn">
+                    🚨 INITIATE TACTICAL INTERCEPT
                 </button>
 
                 <!-- Active Countermeasures Protocol Panel -->
                 <div class="countermeasures-panel" id="countermeasures-panel">
-                    <div class="cm-heading">ACTIVE COUNTERMEASURE PROTOCOLS</div>
-                    <div class="cm-row">
+                    <div class="cm-heading" id="cm-heading">ACTIVE COUNTERMEASURE PROTOCOLS</div>
+                    <div class="cm-row" id="cm-patrol-row">
                         <span class="cm-bullet">●</span>
                         <span><b>Patrol MDT Vector:</b> Route telemetry locked to patrol vehicle</span>
                     </div>

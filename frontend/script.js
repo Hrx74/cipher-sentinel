@@ -12,8 +12,6 @@ const API_BASE =
 const MAP_CENTER = [23.0305, 72.557];
 
 // Telemetry & UI
-const currentDate = document.getElementById("current-date");
-const currentTime = document.getElementById("current-time");
 const incidentAmount = document.getElementById("incident-amount");
 const incidentId = document.getElementById("incident-id");
 const terminalNodeLabel = document.getElementById("terminal-node-label");
@@ -51,6 +49,15 @@ const mapDispatchBanner = document.getElementById("map-dispatch-banner");
 const xaiContainer = document.getElementById("xai-bars-container");
 const rankList = document.getElementById("rank-list");
 
+// Elements for Tiers
+const triageBadge = document.getElementById("triage-badge");
+const triageReason = document.getElementById("triage-reason");
+const patrolAssignmentBox = document.getElementById("patrol-assignment-box");
+const cmPatrolRow = document.getElementById("cm-patrol-row");
+const cmHeading = document.getElementById("cm-heading");
+
+let currentTier = "INTERCEPT";
+
 // Map Layer Toggles
 const layerRadar = document.getElementById("layer-radar");
 const layerDbscan = document.getElementById("layer-dbscan");
@@ -63,26 +70,6 @@ let vectorLineLayer;
 let dbscanLayer;
 let cctvLayer;
 let currentPredictedSpot = null;
-
-// Real-Time Clock
-function updateClock() {
-  const now = new Date();
-  if (currentDate) {
-    currentDate.textContent = now.toLocaleDateString(undefined, {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
-  if (currentTime) {
-    currentTime.textContent = now.toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  }
-}
 
 // Leaflet Map Initialization
 function initLeafletMap() {
@@ -328,6 +315,34 @@ async function runTraceAndPredict(
     if (terminalNodeLabel)
       terminalNodeLabel.textContent = `${(data.latest_known_node || "Ahmedabad").toUpperCase()} HUB`;
 
+    currentTier = data.response_tier || "INTERCEPT";
+
+    if (triageBadge) {
+      triageBadge.textContent = data.tier_label || "🔴 TACTICAL INTERCEPT (P1)";
+      triageBadge.className = `triage-badge ${currentTier.toLowerCase()}`;
+    }
+    if (triageReason) {
+      triageReason.textContent = data.tier_reason || "";
+    }
+
+    if (dispatchBtn) {
+      dispatchBtn.disabled = false;
+      if (currentTier === "INTERCEPT") {
+        dispatchBtn.className = "dispatch-btn tier-intercept";
+        dispatchBtn.textContent = "🚨 INITIATE TACTICAL INTERCEPT";
+        if (patrolAssignmentBox) patrolAssignmentBox.style.display = "flex";
+      } else if (currentTier === "SURVEILLANCE") {
+        dispatchBtn.className = "dispatch-btn tier-surveillance";
+        dispatchBtn.textContent = "📹 ACTIVATE CCTV & BANKING FRICTION";
+        if (patrolAssignmentBox) patrolAssignmentBox.style.display = "none";
+      } else {
+        dispatchBtn.className = "dispatch-btn tier-monitor";
+        dispatchBtn.textContent = "🟢 LOGGED (NO DISPATCH REQUIRED)";
+        dispatchBtn.disabled = true;
+        if (patrolAssignmentBox) patrolAssignmentBox.style.display = "none";
+      }
+    }
+
     renderHotspots(data.hotspots, amount);
   } catch (err) {
     console.error("Trace predict failed:", err);
@@ -486,62 +501,90 @@ function setupEventListeners() {
   // Intercept Dispatch Execution
   if (dispatchBtn) {
     dispatchBtn.addEventListener("click", async () => {
-      if (!currentPredictedSpot) return;
+      if (!currentPredictedSpot || currentTier === "MONITOR") return;
 
       dispatchBtn.disabled = true;
-      dispatchBtn.textContent = "TRANSMITTING VECTORS...";
 
-      try {
-        await fetch(`${API_BASE}/dispatch`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            target_name: currentPredictedSpot.name,
-            latitude: currentPredictedSpot.latitude,
-            longitude: currentPredictedSpot.longitude,
-            threat_level: "HIGH",
-          }),
-        });
+      if (currentTier === "INTERCEPT") {
+        dispatchBtn.textContent = "TRANSMITTING VECTORS...";
 
-        if (vectorLineLayer) {
-          vectorLineLayer.clearLayers();
+        try {
+          await fetch(`${API_BASE}/dispatch`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              target_name: currentPredictedSpot.name,
+              latitude: currentPredictedSpot.latitude,
+              longitude: currentPredictedSpot.longitude,
+              threat_level: "CRITICAL",
+            }),
+          });
 
-          const patrolCoordsMap = {
-            "PCR-04": [23.028, 72.565],
-            "PCR-09": [23.045, 72.52],
-            "PCR-12": [23.036, 72.561],
-          };
+          if (vectorLineLayer) {
+            vectorLineLayer.clearLayers();
 
-          const pcrCoords = patrolCoordsMap[currentPredictedSpot.unit_id] || [
-            23.028, 72.565,
-          ];
-          const targetCoords = [
-            currentPredictedSpot.latitude,
-            currentPredictedSpot.longitude,
-          ];
+            const patrolCoordsMap = {
+              "PCR-04": [23.028, 72.565],
+              "PCR-09": [23.045, 72.52],
+              "PCR-12": [23.036, 72.561],
+            };
 
-          const line = L.polyline([pcrCoords, targetCoords], {
-            color: "#c084fc",
-            weight: 3,
-            dashArray: "6, 8",
-            opacity: 0.95,
-          }).addTo(vectorLineLayer);
+            const pcrCoords = patrolCoordsMap[currentPredictedSpot.unit_id] || [
+              23.028, 72.565,
+            ];
+            const targetCoords = [
+              currentPredictedSpot.latitude,
+              currentPredictedSpot.longitude,
+            ];
 
-          map.fitBounds(line.getBounds().pad(0.3));
+            const line = L.polyline([pcrCoords, targetCoords], {
+              color: "#c084fc",
+              weight: 3,
+              dashArray: "6, 8",
+              opacity: 0.95,
+            }).addTo(vectorLineLayer);
+
+            map.fitBounds(line.getBounds().pad(0.3));
+          }
+
+          if (cmPatrolRow) cmPatrolRow.style.display = "flex";
+          if (cmHeading)
+            cmHeading.textContent = "ACTIVE INTERCEPT & FRICTION PROTOCOLS";
+          if (countermeasuresPanel)
+            countermeasuresPanel.style.display = "block";
+          if (mapDispatchBanner) {
+            mapDispatchBanner.textContent =
+              "🚨 INTERCEPT ACTIVE: Tactical patrol route vector transmitted";
+            mapDispatchBanner.style.display = "block";
+          }
+
+          dispatchBtn.textContent = "✓ INTERCEPT VECTOR DISPATCHED";
+          dispatchBtn.style.background = "rgba(192, 132, 252, 0.25)";
+          dispatchBtn.style.borderColor = "#c084fc";
+          dispatchBtn.style.boxShadow = "0 0 12px rgba(192, 132, 252, 0.35)";
+          dispatchBtn.style.color = "#ffffff";
+        } catch (err) {
+          console.error("Dispatch error:", err);
+          dispatchBtn.disabled = false;
+        }
+      } else if (currentTier === "SURVEILLANCE") {
+        if (vectorLineLayer) vectorLineLayer.clearLayers();
+        if (cmPatrolRow) cmPatrolRow.style.display = "none";
+        if (cmHeading)
+          cmHeading.textContent = "SURVEILLANCE & PERIMETER FRICTION ACTIVE";
+        if (countermeasuresPanel) countermeasuresPanel.style.display = "block";
+        if (mapDispatchBanner) {
+          mapDispatchBanner.textContent =
+            "📹 SURVEILLANCE ACTIVE: 6 CCTV buffers locked & ATM friction broadcast";
+          mapDispatchBanner.style.display = "block";
         }
 
-        if (countermeasuresPanel) countermeasuresPanel.style.display = "block";
-        if (mapDispatchBanner) mapDispatchBanner.style.display = "block";
+        if (cctvLayer && map && !map.hasLayer(cctvLayer)) {
+          map.addLayer(cctvLayer);
+          if (layerCctv) layerCctv.classList.add("active");
+        }
 
-        dispatchBtn.textContent = "✓ INTERCEPT VECTOR DISPATCHED";
-        dispatchBtn.style.background = "rgba(192, 132, 252, 0.25)";
-        dispatchBtn.style.borderColor = "#c084fc";
-        dispatchBtn.style.boxShadow = "0 0 12px rgba(192, 132, 252, 0.35)";
-        dispatchBtn.style.color = "#ffffff";
-      } catch (err) {
-        console.error("Dispatch failed:", err);
-        dispatchBtn.textContent = "RETRY DISPATCH";
-        dispatchBtn.disabled = false;
+        dispatchBtn.textContent = "✓ SURVEILLANCE & FRICTION BROADCAST";
       }
     });
   }
@@ -589,7 +632,6 @@ function setupEventListeners() {
 
 // App Initialization
 async function initDashboard() {
-  updateClock();
   initLeafletMap();
   setupEventListeners();
   await Promise.all([runTraceAndPredict(), loadTacticalLayers()]);
@@ -600,5 +642,3 @@ if (document.readyState === "loading") {
 } else {
   initDashboard();
 }
-
-setInterval(updateClock, 1000);

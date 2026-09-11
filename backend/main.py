@@ -636,12 +636,32 @@ def trace_and_predict(payload: TracePredictRequest):
             reverse=True,
         )
 
-    confidence = float(ranking[0].get("probability", 0.78))
-    fraud_prob = calculate_calibrated_fraud_prob(
-        resolved_amount,
-        resolved_hour,
-        raw_fraud,
+    # Confidence from top-ranked hotspot probability
+    confidence = float(ranking[0].get("probability", 0.76))
+
+    # Derive real ML metrics
+    fraud_prob = round(float(raw_fraud), 3) if raw_fraud is not None else 0.88
+
+    # TIERED LAW ENFORCEMENT DECISION ENGINE
+    # Patrol resources are finite: only mobilize PCR if both fraud risk and spatial confidence justify it
+    target_spot = next(
+        (s for s in hotspots if s["name"] == matched_spot_name),
+        hotspots[0],
     )
+    has_patrol = target_spot.get("intercept_eta_mins", 99) <= 10.0
+
+    if fraud_prob >= 0.78 and confidence >= 0.65 and has_patrol:
+        response_tier = "INTERCEPT"
+        tier_label = "🔴 TACTICAL INTERCEPT (P1)"
+        tier_reason = "High fraud severity & decisive corridor signal. Immediate patrol vector authorized."
+    elif fraud_prob >= 0.45:
+        response_tier = "SURVEILLANCE"
+        tier_label = "🟡 ENHANCED SURVEILLANCE (P2)"
+        tier_reason = "Moderate anomaly score. Locking 6 CCTV cameras & issuing NPCI ATM step-up friction."
+    else:
+        response_tier = "MONITOR"
+        tier_label = "🟢 PASSIVE MONITORING (P3)"
+        tier_reason = "Telemetry within normal statistical limits. No law enforcement deployment required."
 
     for spot in hotspots:
         spot["source"] = "model"
@@ -662,7 +682,10 @@ def trace_and_predict(payload: TracePredictRequest):
         "confidence": confidence,
         "hotspot_ranking": ranking,
         "fraud_prob": fraud_prob,
-        "alert": True,
+        "response_tier": response_tier,
+        "tier_label": tier_label,
+        "tier_reason": tier_reason,
+        "alert": bool(response_tier != "MONITOR"),
         "hotspots": hotspots,
         "source": "model",
     }
