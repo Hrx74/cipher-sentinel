@@ -64,3 +64,35 @@ def test_hotspots_endpoint_exposes_fraud_probability_and_ranking(monkeypatch):
     assert isinstance(ranked, list)
     assert ranked[0]["hotspot"] == "CG Road (Navrangpura)"
     assert payload[0]["fraud_prob"] == 0.73
+
+
+def test_trace_predict_decouples_victim_and_returns_terminal_mule(monkeypatch):
+    """Verifies that the victim is decoupled and terminal node is in Ahmedabad."""
+    monkeypatch.setattr(main, "models_ready", lambda: True)
+    monkeypatch.setattr(
+        main,
+        "predict_hotspot_zone",
+        lambda **kwargs: ("Ashram Road Financial Hub", 0.94),
+    )
+    monkeypatch.setattr(
+        main,
+        "predict_hotspot_ranking",
+        lambda **kwargs: [
+            {"hotspot": "Ashram Road Financial Hub", "probability": 0.94},
+            {"hotspot": "CG Road (Navrangpura)", "probability": 0.04},
+        ],
+    )
+    monkeypatch.setattr(main, "predict_fraud_probability", lambda **kwargs: 0.99)
+
+    response = client.post(
+        "/api/v1/trace-predict",
+        json={"transaction_id": "TXN-8492", "amount": 85000, "hour": 21},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["latest_known_node"] == "Ahmedabad"
+    assert data["fund_flow"] == ["Mumbai", "Delhi", "Ahmedabad"]
+    assert data["terminal_ifsc"] == "SBIN0001234"
+    assert data["predicted_hotspot"] == "Ashram Road Financial Hub"
+    assert data["fraud_prob"] >= 0.90

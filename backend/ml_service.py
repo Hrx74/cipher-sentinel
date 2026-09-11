@@ -5,10 +5,28 @@ import joblib
 import numpy as np
 import pandas as pd
 
-ML_DIR = Path(__file__).resolve().parent.parent / "ML"
-MODEL_PATH = ML_DIR / "hotspot_model.pkl"
-ENCODER_PATH = ML_DIR / "hotspot_encoder.pkl"
-FRAUD_MODEL_PATH = ML_DIR / "model.pkl"
+CURRENT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CURRENT_DIR.parent
+
+
+def _resolve_model_path(filename: str) -> Path:
+    # Check backend directory first, then root directory, then ML/ directory
+    candidates = [
+        CURRENT_DIR / filename,
+        PROJECT_ROOT / filename,
+        PROJECT_ROOT / "ML" / filename,
+        CURRENT_DIR / "ML" / filename,
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return CURRENT_DIR / filename
+
+
+MODEL_PATH = _resolve_model_path("model.pkl")
+HOTSPOT_MODEL_PATH = _resolve_model_path("hotspot_model.pkl")
+HOTSPOT_ENCODER_PATH = _resolve_model_path("hotspot_encoder.pkl")
+FRAUD_MODEL_PATH = _resolve_model_path("model.pkl")
 
 ZONE_TO_HOTSPOT_NAME = {
     "Ashram Road Financial Hub": "Ashram Road",
@@ -46,8 +64,8 @@ def load_hotspot_models() -> None:
     global hotspot_model, hotspot_encoder, fraud_model, model_load_error
 
     try:
-        hotspot_model = joblib.load(MODEL_PATH)
-        hotspot_encoder = joblib.load(ENCODER_PATH)
+        hotspot_model = joblib.load(HOTSPOT_MODEL_PATH)
+        hotspot_encoder = joblib.load(HOTSPOT_ENCODER_PATH)
         fraud_model = joblib.load(FRAUD_MODEL_PATH)
         model_load_error = None
     except Exception as exc:
@@ -87,16 +105,14 @@ def _default_feature_row(
         "Transaction_Amount": float(amount),
         "Account_Balance": 25000.0,
         "IP_Address_Flag": 0,
-        "Previous_Fraudulent_Activity": 0,
-        "Daily_Transaction_Count": 3,
+        "Previous_Fraudulent_Activity": 1,
+        "Daily_Transaction_Count": 5,
         "Avg_Transaction_Amount_7d": float(amount),
-        "Failed_Transaction_Count_7d": 0,
-        "Card_Age": 365,
-        "Transaction_Distance": 0.5,
-        "Risk_Score": 50,
-        "Is_Weekend": (
-            1 if (day_of_week if day_of_week is not None else now.weekday()) >= 5 else 0
-        ),
+        "Failed_Transaction_Count_7d": 3,
+        "Card_Age": 120,
+        "Transaction_Distance": 1200.0,
+        "Risk_Score": 0.78,
+        "Is_Weekend": 1 if now.weekday() >= 5 else 0,
         "Latitude": float(latitude),
         "Longitude": float(longitude),
         "Hour": int(hour if hour is not None else now.hour),

@@ -7,24 +7,24 @@
     <title>Cipher Sentinel // Tactical Intercept Command</title>
     <!-- Leaflet Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <!-- Gov-Tech Console CSS -->
+    <!-- Cleaned Tactical Console CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- TOPBAR / TELEMETRY -->
+    <!-- TOPBAR / SYSTEM TELEMETRY -->
     <header class="topbar">
         <div class="brand">
             <div class="brand-icon">🛡</div>
             <div>
-                <h1>CIPHER SENTINEL // LAW ENFORCEMENT DISPATCH</h1>
-                <p>Transaction-Graph Trace & Cash-Out Intercept Radar • Ahmedabad Hub D3</p>
+                <h1>CIPHER SENTINEL // LAW ENFORCEMENT INTERCEPT CONSOLE</h1>
+                <p>NCRP 1930 Fund-Flow Intelligence & Tactical ATM Cash-Out Interdiction</p>
             </div>
         </div>
         <div class="top-status">
             <span class="live-dot"></span>
-            <span class="live-text">RADAR ACTIVE</span>
+            <span class="live-text">TACTICAL RADAR ACTIVE</span>
             <span class="separator">|</span>
             <span id="current-date">--</span>
             <span id="current-time">--</span>
@@ -40,19 +40,19 @@
 
             <div class="map-label">
                 <span class="live-dot"></span>
-                AHMEDABAD TACTICAL RADAR
+                AHMEDABAD METRO TACTICAL RADAR (SECTOR D3)
             </div>
 
-            <!-- Map Layer Toggles -->
+            <!-- Layer Toggles -->
             <div class="map-controls">
                 <button class="layer-btn active" id="layer-radar">● RADAR</button>
-                <button class="layer-btn" id="layer-dbscan">● DBSCAN CLUSTERS</button>
+                <button class="layer-btn" id="layer-dbscan">● DBSCAN DENSITY</button>
                 <button class="layer-btn" id="layer-cctv">📹 CCTV GRID</button>
             </div>
 
             <!-- Intercept Active Notification -->
             <div id="map-dispatch-banner" class="map-dispatch-banner">
-                🚨 INTERCEPT VECTOR ACTIVE: Route locked to target corridor
+                🚨 INTERCEPT VECTOR ACTIVE: Tactical route locked to target ATM corridor
             </div>
 
             <!-- Map Legend -->
@@ -60,11 +60,11 @@
                 <div class="legend-title">RADAR ENTITIES</div>
                 <div class="legend-item">
                     <span class="legend-dot high"></span>
-                    <span>Predicted Target Zone (&gt;80%)</span>
+                    <span>High-Risk Target Corridor (&gt;80%)</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-dot medium"></span>
-                    <span>Monitored Corridor (50–80%)</span>
+                    <span>Monitored Banking Sector</span>
                 </div>
                 <div class="legend-item">
                     <span class="police-icon">🚓</span>
@@ -73,19 +73,22 @@
             </div>
         </section>
 
-        <!-- RIGHT: OPERATIONAL DISPATCH CONSOLE -->
+        <!-- RIGHT: INTERCEPT OPERATIONS CONSOLE -->
         <aside class="right-panel">
 
-            <!-- STAGE 1: FUND-FLOW TRACE & INGESTION -->
+            <!-- SECTION 1: TRANSACTION GRAPH & INCIDENT TELEMETRY -->
             <section class="card">
-                <div class="stage-tag">STAGE 1 // TRANSACTION GRAPH & FUND-FLOW TRACE</div>
+                <div class="card-header">
+                    <span class="card-title">INTERSTATE FUND-FLOW TRACE</span>
+                    <span class="hub-tag" id="terminal-node-label">AHMEDABAD HUB</span>
+                </div>
 
-                <!-- Visual Transaction Fund-Flow Chain -->
+                <!-- 3-Hop Fund-Flow Trail -->
                 <div class="fund-flow-container">
                     <div class="fund-node">
                         <span class="node-badge victim">VICTIM</span>
                         <strong id="flow-victim-city">Mumbai</strong>
-                        <small>Debited Node</small>
+                        <small>Debited Origin</small>
                     </div>
                     <div class="fund-arrow" id="flow-arrow-amt">──₹85k──►</div>
                     <div class="fund-node">
@@ -101,93 +104,90 @@
                     </div>
                 </div>
 
-                <div class="sandbox-grid" style="margin-top: 8px;">
-                    <div class="sandbox-row">
-                        <div class="sandbox-col">
-                            <label>TRANSACTION SCENARIO</label>
-                            <select id="sandbox-txn-select">
-                                <option value="TXN-8492" selected>TXN-8492: Mumbai → Delhi → Ahmedabad (SBI)</option>
-                                <option value="TXN-3104">TXN-3104: Bengaluru → Jaipur → Ahmedabad (HDFC)</option>
-                                <option value="TXN-9918">TXN-9918: Pune → Indore → Ahmedabad (ICICI)</option>
-                            </select>
-                        </div>
-                        <div class="sandbox-col">
-                            <label>INCIDENT TIME</label>
-                            <select id="sandbox-hour">
-                                <option value="2">02:00 AM (Night Off-Peak)</option>
-                                <option value="14">02:00 PM (Business Peak)</option>
-                                <option value="21" selected>09:00 PM (Evening Surge)</option>
-                            </select>
-                        </div>
+                <!-- Parameters & Live Simulation -->
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label>INCIDENT SCENARIO</label>
+                        <select id="sandbox-txn-select">
+                            <option value="TXN-8492" selected>TXN-8492: Mumbai → Delhi → Ahmedabad (SBI)</option>
+                            <option value="TXN-3104">TXN-3104: Bengaluru → Jaipur → Ahmedabad (HDFC)</option>
+                            <option value="TXN-9918">TXN-9918: Pune → Indore → Ahmedabad (ICICI)</option>
+                        </select>
                     </div>
 
-                    <div class="sandbox-field">
-                        <label>STOLEN AMOUNT: <span id="sandbox-amount-val">₹85,000</span></label>
+                    <div class="control-group">
+                        <label>INCIDENT TIME</label>
+                        <select id="sandbox-hour">
+                            <option value="2">02:00 AM (Night Off-Peak)</option>
+                            <option value="14">02:00 PM (Business Peak)</option>
+                            <option value="21" selected>09:00 PM (Evening Surge)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group full-width">
+                        <label>
+                            <span>STOLEN EXTRACTION AMOUNT</span>
+                            <span class="amount-readout" id="sandbox-amount-val">₹85,000</span>
+                        </label>
                         <input type="range" id="sandbox-amount" min="10000" max="150000" step="2500" value="85000">
                     </div>
                 </div>
 
-                <div class="sandbox-actions">
-                    <button class="eval-btn" id="sandbox-btn">TRACE FLOW & PREDICT CASH-OUT</button>
-                    <button class="simulate-btn" id="simulate-btn">⚡ INGEST 1930 NCRP STREAM</button>
+                <div class="action-buttons">
+                    <button class="primary-btn" id="sandbox-btn">TRACE & PREDICT EXTRACTION</button>
+                    <button class="secondary-btn" id="simulate-btn">⚡ INGEST 1930 STREAM</button>
                 </div>
 
-                <div class="quick-stats">
-                    <div><span>TXN REF:</span> <b id="incident-id">TXN-8492</b></div>
-                    <div><span>AMOUNT:</span> <b class="red" id="incident-amount">₹85,000</b></div>
-                    <div><span>TERMINAL:</span> <b id="terminal-node-label">Ahmedabad</b></div>
+                <div class="telemetry-bar">
+                    <div><span>INCIDENT:</span> <b id="incident-id">TXN-8492</b></div>
+                    <div><span>AMOUNT:</span> <b class="highlight-red" id="incident-amount">₹85,000</b></div>
                     <div><span>LATENCY:</span> <b>8.4ms</b></div>
                 </div>
             </section>
 
-            <!-- STAGE 2: XGBOOST FORECAST (DOWNSTREAM PREDICTION) -->
-            <section class="card target-card">
-                <div class="stage-tag alert">STAGE 2 // DOWNSTREAM ATM CORRIDOR FORECAST</div>
-
-                <div class="target-header">
-                    <div>
-                        <h2 id="target-name">Ashram Road Banking Corridor</h2>
-                        <p id="target-zone">Ellisbridge • High-Risk Public ATM Cluster</p>
-                    </div>
-                    <span class="ml-badge">XGBOOST v2.4</span>
+            <!-- SECTION 2: TARGET ASSESSMENT & DISPATCH COUNTERMEASURES -->
+            <section class="card intercept-card">
+                <div class="card-header">
+                    <span class="card-title alert">PREDICTED CASH-OUT TARGET</span>
+                    <span class="ml-tag">XGBOOST v2.4</span>
                 </div>
 
-                <div class="target-grid">
-                    <div class="metric-box">
-                        <span>MODEL CONFIDENCE</span>
-                        <strong id="target-confidence">100%</strong>
+                <div class="target-summary">
+                    <h2 id="target-name">Ashram Road Banking Corridor</h2>
+                    <p id="target-zone">Ellisbridge • High-Risk Public ATM Cluster</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <span>CORRIDOR PROBABILITY</span>
+                        <strong id="target-confidence">94%</strong>
                     </div>
-                    <div class="metric-box">
-                        <span>FRAUD PROBABILITY</span>
-                        <strong class="red" id="target-fraud-prob">99.8%</strong>
+                    <div class="metric-item">
+                        <span>INCIDENT SEVERITY</span>
+                        <strong class="highlight-red" id="target-fraud-prob">99.8%</strong>
                     </div>
-                    <div class="metric-box">
-                        <span>EST. EXTRACTION</span>
+                    <div class="metric-item">
+                        <span>EXTRACTION AT RISK</span>
                         <strong id="target-cash">₹85,000</strong>
                     </div>
-                    <div class="metric-box">
+                    <div class="metric-item">
                         <span>CASH-OUT WINDOW</span>
-                        <strong class="red">15–45 MIN</strong>
+                        <strong class="highlight-red">15–45 MIN</strong>
                     </div>
                 </div>
-            </section>
 
-            <!-- STAGE 3: POST-PREDICTION COUNTERMEASURES (DISPATCH) -->
-            <section class="card dispatch-card">
-                <div class="stage-tag action">STAGE 3 // POST-PREDICTION COUNTERMEASURES</div>
-
-                <div class="intercept-details">
-                    <div class="intercept-row">
-                        <span class="label">ASSIGNED PATROL:</span>
-                        <strong class="blue" id="assigned-unit">PCR Van 04 (Ellisbridge)</strong>
+                <div class="patrol-assignment">
+                    <div class="patrol-info">
+                        <span class="label">NEAREST PATROL:</span>
+                        <strong class="highlight-blue" id="assigned-unit">PCR Van 04 (Ellisbridge)</strong>
                     </div>
-                    <div class="intercept-row">
-                        <span class="label">DISTANCE TO ATM:</span>
+                    <div class="patrol-info">
+                        <span class="label">TRANSIT DISTANCE:</span>
                         <strong id="intercept-distance">1.55 km</strong>
                     </div>
-                    <div class="intercept-row">
-                        <span class="label">ESTIMATED INTERCEPT:</span>
-                        <strong class="green" id="intercept-eta">4.7 mins</strong>
+                    <div class="patrol-info">
+                        <span class="label">INTERCEPT ETA:</span>
+                        <strong class="highlight-green" id="intercept-eta">4.7 mins</strong>
                     </div>
                 </div>
 
@@ -195,32 +195,36 @@
                     🚨 INITIATE INTERCEPT DISPATCH
                 </button>
 
-                <!-- Active Countermeasures Details -->
+                <!-- Active Countermeasures Protocol Panel -->
                 <div class="countermeasures-panel" id="countermeasures-panel">
-                    <div class="cm-title">ACTIVE COUNTERMEASURE PROTOCOLS</div>
-                    <div class="cm-item">
-                        <span class="cm-status">●</span>
-                        <span><b>Patrol MDT Vector:</b> Route coordinates pushed to vehicle terminal</span>
+                    <div class="cm-heading">ACTIVE COUNTERMEASURE PROTOCOLS</div>
+                    <div class="cm-row">
+                        <span class="cm-bullet">●</span>
+                        <span><b>Patrol MDT Vector:</b> Route telemetry locked to patrol vehicle</span>
                     </div>
-                    <div class="cm-item">
-                        <span class="cm-status">●</span>
+                    <div class="cm-row">
+                        <span class="cm-bullet">●</span>
                         <span><b>Banking Friction Advisory:</b> 750m perimeter ATM OTP verification requested</span>
                     </div>
-                    <div class="cm-item">
-                        <span class="cm-status">●</span>
-                        <span><b>CCTV Corridor Lock:</b> Junction cameras tagged for evidentiary audit</span>
+                    <div class="cm-row">
+                        <span class="cm-bullet">●</span>
+                        <span><b>CCTV Corridor Lock:</b> 6 intersection cameras locked for evidentiary audit</span>
                     </div>
                 </div>
             </section>
 
-            <!-- STAGE 4: EXPLAINABLE AI (XAI) & CORRIDOR RANKINGS -->
+            <!-- SECTION 3: OPERATIONAL RISK ATTRIBUTION & CORRIDOR RANKINGS -->
             <section class="card">
-                <div class="section-title">EXPLAINABLE AI (XAI) // FEATURE ATTRIBUTION</div>
+                <div class="card-header">
+                    <span class="card-title">OPERATIONAL RISK ATTRIBUTION</span>
+                </div>
                 <div class="xai-container" id="xai-bars-container">
                     <!-- Dynamic XAI Bars rendered via script.js -->
                 </div>
 
-                <div class="section-title" style="margin-top: 10px;">TOP CORRIDOR RISK RANKINGS</div>
+                <div class="card-header" style="margin-top: 12px;">
+                    <span class="card-title">CORRIDOR RISK RANKINGS</span>
+                </div>
                 <div class="rank-list" id="rank-list">
                     <div class="rank-row">
                         <span>1. Loading corridor ranking...</span>
@@ -234,7 +238,7 @@
 
     <!-- Leaflet Map JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Tactical Dispatch Script -->
+    <!-- Tactical Intercept Script -->
     <script src="script.js"></script>
 </body>
 
