@@ -1,23 +1,44 @@
 import math
+import os
+import sys
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Literal
+
+# Inject backend directory into sys.path before any local imports run
+CURRENT_DIR = Path(__file__).resolve().parent
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from database import Complaint, get_db, init_db
-from ml_service import (
-    load_hotspot_models,
-    match_hotspot,
-    models_ready,
-    predict_fraud_probability,
-    predict_hotspot_ranking,
-    predict_hotspot_zone,
-)
+# Robust fallback to support both root-level and backend-level execution
+try:
+    from database import Complaint, get_db, init_db
+    from ml_service import (
+        load_hotspot_models,
+        match_hotspot,
+        models_ready,
+        predict_fraud_probability,
+        predict_hotspot_ranking,
+        predict_hotspot_zone,
+    )
+except ImportError:
+    from backend.database import Complaint, get_db, init_db
+    from backend.ml_service import (
+        load_hotspot_models,
+        match_hotspot,
+        models_ready,
+        predict_fraud_probability,
+        predict_hotspot_ranking,
+        predict_hotspot_zone,
+    )
 
 # =========================================================
 # OPERATIONAL REFERENCE DATA: AHMEDABAD SECTOR D3
@@ -373,10 +394,25 @@ def calculate_haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -
 
 def get_closest_patrol_unit(target_lat: float, target_lon: float) -> dict:
     """Calculates closest PCR unit and response ETA."""
-    closest_unit = None
-    min_dist = float("inf")
+    if not PATROL_UNITS:
+        return {
+            "unit_id": "PCR-00",
+            "unit_name": "Fallback Patrol Unit",
+            "unit_lat": 23.0300,
+            "unit_lng": 72.5800,
+            "distance_km": 0.0,
+            "eta_minutes": 2.0,
+        }
 
-    for unit in PATROL_UNITS:
+    closest_unit = PATROL_UNITS[0]
+    min_dist = calculate_haversine_km(
+        target_lat,
+        target_lon,
+        closest_unit["latitude"],
+        closest_unit["longitude"],
+    )
+
+    for unit in PATROL_UNITS[1:]:
         dist = calculate_haversine_km(
             target_lat, target_lon, unit["latitude"], unit["longitude"]
         )
@@ -776,3 +812,12 @@ def create_complaint(complaint: ComplaintCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_complaint)
     return db_complaint
+
+
+# =========================================================
+# SERVE FRONTEND STATIC FILES (SINGLE-DEPLOYMENT ARCHITECTURE)
+# =========================================================
+
+FRONTEND_DIR = CURRENT_DIR.parent / "frontend"
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
