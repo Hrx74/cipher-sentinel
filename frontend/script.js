@@ -2,7 +2,12 @@
    CIPHER SENTINEL - TRANSACTION GRAPH CONTROLLER
 ========================================================= */
 
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+// Automatically uses the live Render domain when accessed online,
+// or local port 8000 when testing locally:
+const API_BASE = window.location.origin.includes("127.0.0.1") || window.location.origin.includes("localhost")
+  ? "http://127.0.0.1:8000/api/v1"
+  : `${window.location.origin}/api/v1`;
+
 const MAP_CENTER = [23.0305, 72.557];
 
 // UI Elements
