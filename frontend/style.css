@@ -270,17 +270,19 @@ body {
 .map-dispatch-banner {
   display: none;
   position: absolute;
-  top: 46px;
+  top: 48px;
   right: 10px;
-  z-index: 500;
-  padding: 6px 10px;
-  background: var(--lavender-soft);
-  color: var(--lavender);
-  border: 1px solid var(--lavender);
+  z-index: 9999;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.96);
+  color: #ffffff !important;
+  border: 1.5px solid #c084fc;
+  box-shadow: 0 0 16px rgba(192, 132, 252, 0.45);
   border-radius: 4px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .map-legend {
