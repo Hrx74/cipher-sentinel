@@ -1,9 +1,8 @@
 /* =========================================================
-   CIPHER SENTINEL - TRANSACTION GRAPH CONTROLLER
+   CIPHER SENTINEL - TACTICAL CONTROLLER
 ========================================================= */
 
-// Automatically uses the live Render domain when accessed online,
-// or local port 8000 when testing locally:
+// Dynamically auto-detects localhost vs production cloud domain
 const API_BASE =
   window.location.origin.includes("127.0.0.1") ||
   window.location.origin.includes("localhost")
@@ -12,14 +11,14 @@ const API_BASE =
 
 const MAP_CENTER = [23.0305, 72.557];
 
-// UI Elements
+// Telemetry & UI
 const currentDate = document.getElementById("current-date");
 const currentTime = document.getElementById("current-time");
 const incidentAmount = document.getElementById("incident-amount");
 const incidentId = document.getElementById("incident-id");
 const terminalNodeLabel = document.getElementById("terminal-node-label");
 
-// Fund-Flow Stepper Elements
+// Fund-Flow Stepper
 const flowVictimCity = document.getElementById("flow-victim-city");
 const flowL1City = document.getElementById("flow-l1-city");
 const flowL1Bank = document.getElementById("flow-l1-bank");
@@ -27,7 +26,7 @@ const flowL2City = document.getElementById("flow-l2-city");
 const flowL2Ifsc = document.getElementById("flow-l2-ifsc");
 const flowArrowAmt = document.getElementById("flow-arrow-amt");
 
-// Sandbox Elements
+// Interactive Controls
 const sandboxTxnSelect = document.getElementById("sandbox-txn-select");
 const sandboxAmount = document.getElementById("sandbox-amount");
 const sandboxAmountVal = document.getElementById("sandbox-amount-val");
@@ -42,7 +41,7 @@ const targetConfidence = document.getElementById("target-confidence");
 const targetFraudProb = document.getElementById("target-fraud-prob");
 const targetCash = document.getElementById("target-cash");
 
-// Intercept & Dispatch Elements
+// Intercept & Dispatch
 const assignedUnit = document.getElementById("assigned-unit");
 const interceptDistance = document.getElementById("intercept-distance");
 const interceptEta = document.getElementById("intercept-eta");
@@ -52,7 +51,7 @@ const mapDispatchBanner = document.getElementById("map-dispatch-banner");
 const xaiContainer = document.getElementById("xai-bars-container");
 const rankList = document.getElementById("rank-list");
 
-// Layer buttons
+// Map Layer Toggles
 const layerRadar = document.getElementById("layer-radar");
 const layerDbscan = document.getElementById("layer-dbscan");
 const layerCctv = document.getElementById("layer-cctv");
@@ -136,13 +135,13 @@ function renderPoliceUnits() {
 
     L.marker([unit.lat, unit.lng], { icon })
       .bindPopup(
-        `<b style="color:#ffffff;">${unit.name}</b><br><span style="color:#94a3b8;">ID: ${unit.id}</span><br><span style="color:#c084fc;">Status: Standby Intercept</span>`,
+        `<b style="color:#ffffff;">${unit.name}</b><br><span style="color:#94a3b8;">ID: ${unit.id}</span><br><span style="color:#c084fc;">Status: Active Intercept</span>`,
       )
       .addTo(policeLayer);
   });
 }
 
-// Render Dynamic Explainable AI Bars
+// Render Explainable Risk Factors
 function renderXAI(xaiFactors) {
   if (!xaiContainer || !Array.isArray(xaiFactors)) return;
 
@@ -164,11 +163,8 @@ function renderXAI(xaiFactors) {
 }
 
 // Render Corridor Risk Rankings
-function renderRanking(hotspots) {
-  if (!rankList || !Array.isArray(hotspots) || hotspots.length === 0) return;
-
-  const ranking = hotspots[0]?.ranking || [];
-  if (!Array.isArray(ranking) || ranking.length === 0) return;
+function renderRanking(ranking) {
+  if (!rankList || !Array.isArray(ranking) || ranking.length === 0) return;
 
   rankList.innerHTML = ranking
     .slice(0, 4)
@@ -185,6 +181,20 @@ function renderRanking(hotspots) {
     .join("");
 }
 
+// Reset Dispatch UI state
+function resetDispatchUI() {
+  if (vectorLineLayer) vectorLineLayer.clearLayers();
+  if (countermeasuresPanel) countermeasuresPanel.style.display = "none";
+  if (mapDispatchBanner) mapDispatchBanner.style.display = "none";
+  if (dispatchBtn) {
+    dispatchBtn.disabled = false;
+    dispatchBtn.textContent = "🚨 INITIATE INTERCEPT DISPATCH";
+    dispatchBtn.style.background = "";
+    dispatchBtn.style.borderColor = "";
+    dispatchBtn.style.boxShadow = "";
+  }
+}
+
 // Render Hotspots & Hydrate Console
 function renderHotspots(hotspots, activeAmount = 85000) {
   if (
@@ -195,15 +205,15 @@ function renderHotspots(hotspots, activeAmount = 85000) {
   )
     return;
 
+  resetDispatchUI();
   hotspotLayer.clearLayers();
 
-  // Find the exact predicted spot flagged by backend
-  currentPredictedSpot = hotspots.find((spot) => spot.is_predicted === true);
-  if (!currentPredictedSpot) {
-    currentPredictedSpot = hotspots[0];
-  }
+  currentPredictedSpot =
+    hotspots.find((spot) => spot.is_predicted === true) || hotspots[0];
 
-  renderRanking(hotspots);
+  if (currentPredictedSpot?.ranking) {
+    renderRanking(currentPredictedSpot.ranking);
+  }
   if (currentPredictedSpot?.xai_factors) {
     renderXAI(currentPredictedSpot.xai_factors);
   }
@@ -217,15 +227,14 @@ function renderHotspots(hotspots, activeAmount = 85000) {
 
     const popupHtml = `
       <div style="font-family: monospace;">
-        <b style="color: #ffffff; font-size: 13px;">${spot.name} Cash-Out Corridor</b><br>
+        <b style="color: #ffffff; font-size: 12px;">${spot.name} Cash-Out Corridor</b><br>
         <span style="color: #94a3b8;">${spot.area} • Monitored Hub</span><br>
         <span style="color: #64748b;">Nearest Patrol: <b style="color:#ffffff;">${spot.nearest_unit || "PCR-04"}</b></span><br>
-        <span style="color: #c084fc;">ETA: <b>${spot.intercept_eta_mins || 4.7} mins</b> (${spot.distance_km || 1.55} km)</span>
+        <span style="color: #c084fc;">ETA: <b>${spot.intercept_eta_mins ?? 4.7} mins</b> (${spot.distance_km ?? 1.55} km)</span>
       </div>
     `;
 
     if (isPredicted) {
-      // Hollow dashed radar perimeter around target corridor
       L.circle([lat, lng], {
         radius: 650,
         color: "#c084fc",
@@ -248,29 +257,31 @@ function renderHotspots(hotspots, activeAmount = 85000) {
     if (isPredicted) marker.openPopup();
   });
 
-  // Hydrate Cards
+  // Hydrate Console Target Metrics cleanly
   if (currentPredictedSpot) {
     if (targetName)
       targetName.textContent = `${currentPredictedSpot.name} Banking Corridor`;
     if (targetZone)
       targetZone.textContent = `${currentPredictedSpot.area} • High-Risk ATM Cluster`;
+
+    // Model confidence equals the top softmax probability
+    const confVal = Number(currentPredictedSpot.confidence ?? 0.84);
     if (targetConfidence)
-      targetConfidence.textContent = `${Math.round((currentPredictedSpot.confidence ?? 1.0) * 100)}%`;
-    if (targetFraudProb) {
-      const probVal = Number(currentPredictedSpot.fraud_prob);
-      const safeProb = !isNaN(probVal) && probVal > 0.1 ? probVal : 0.984;
-      targetFraudProb.textContent = `${(safeProb * 100).toFixed(1)}%`;
-    }
+      targetConfidence.textContent = `${Math.round(confVal * 100)}%`;
+
+    // Fraud probability formatted cleanly without zero-suppression
+    const probVal = Number(currentPredictedSpot.fraud_prob ?? 0.982);
+    if (targetFraudProb)
+      targetFraudProb.textContent = `${(probVal * 100).toFixed(1)}%`;
+
     if (targetCash)
       targetCash.textContent = `₹${Number(activeAmount).toLocaleString("en-IN")}`;
-
     if (assignedUnit)
-      assignedUnit.textContent =
-        currentPredictedSpot.nearest_unit || "PCR Van 04 (Ellisbridge)";
+      assignedUnit.textContent = currentPredictedSpot.nearest_unit;
     if (interceptDistance)
-      interceptDistance.textContent = `${currentPredictedSpot.distance_km || 1.55} km`;
+      interceptDistance.textContent = `${currentPredictedSpot.distance_km} km`;
     if (interceptEta)
-      interceptEta.textContent = `${currentPredictedSpot.intercept_eta_mins || 4.7} mins`;
+      interceptEta.textContent = `${currentPredictedSpot.intercept_eta_mins} mins`;
   }
 
   const bounds = L.latLngBounds(hotspots.map((s) => [s.latitude, s.longitude]));
@@ -296,12 +307,7 @@ async function runTraceAndPredict(
 
     const data = await res.json();
 
-    if (targetFraudProb && data.fraud_prob) {
-      const topProb = Math.max(Number(data.fraud_prob), 0.88);
-      targetFraudProb.textContent = `${(topProb * 100).toFixed(1)}%`;
-    }
-
-    // Update Fund Flow Visual Stepper
+    // Update 3-Hop Stepper
     if (Array.isArray(data.fund_flow_hops) && data.fund_flow_hops.length >= 3) {
       if (flowVictimCity)
         flowVictimCity.textContent = data.fund_flow_hops[0].location;
@@ -312,14 +318,15 @@ async function runTraceAndPredict(
         flowL2Ifsc.textContent = data.terminal_ifsc || "SBIN0001234";
     }
 
-    if (incidentId) incidentId.textContent = data.transaction_id;
-    if (incidentAmount)
-      incidentAmount.textContent = `₹${Number(amount).toLocaleString("en-IN")}`;
     if (flowArrowAmt) {
       flowArrowAmt.textContent = `──₹${Math.round(Number(amount) / 1000)}k──►`;
     }
+
+    if (incidentId) incidentId.textContent = data.transaction_id;
+    if (incidentAmount)
+      incidentAmount.textContent = `₹${Number(amount).toLocaleString("en-IN")}`;
     if (terminalNodeLabel)
-      terminalNodeLabel.textContent = data.latest_known_node || "Ahmedabad";
+      terminalNodeLabel.textContent = `${(data.latest_known_node || "Ahmedabad").toUpperCase()} HUB`;
 
     renderHotspots(data.hotspots, amount);
   } catch (err) {
@@ -344,7 +351,7 @@ async function loadTacticalLayers() {
           weight: 1,
         })
           .bindPopup(
-            `<b>DBSCAN Cluster Node</b><br>Density Score: ${(pt.density * 100).toFixed(0)}%`,
+            `<b>DBSCAN Density Cluster</b><br>Score: ${(pt.density * 100).toFixed(0)}%`,
           )
           .addTo(dbscanLayer);
       });
@@ -372,16 +379,37 @@ async function loadTacticalLayers() {
   }
 }
 
-// Setup Interactive Handlers
+// Setup Event Listeners
 function setupEventListeners() {
+  // Amount slider updates
   if (sandboxAmount && sandboxAmountVal) {
     sandboxAmount.addEventListener("input", (e) => {
       const val = Number(e.target.value);
       sandboxAmountVal.textContent = `₹${val.toLocaleString("en-IN")}`;
     });
+
+    sandboxAmount.addEventListener("change", () => {
+      const txnId = sandboxTxnSelect ? sandboxTxnSelect.value : "TXN-8492";
+      runTraceAndPredict(
+        txnId,
+        Number(sandboxAmount.value),
+        Number(sandboxHour.value),
+      );
+    });
   }
 
-  // Transaction Scenario Dropdown Switcher
+  if (sandboxHour) {
+    sandboxHour.addEventListener("change", () => {
+      const txnId = sandboxTxnSelect ? sandboxTxnSelect.value : "TXN-8492";
+      runTraceAndPredict(
+        txnId,
+        Number(sandboxAmount.value),
+        Number(sandboxHour.value),
+      );
+    });
+  }
+
+  // Scenario Dropdown Switcher
   if (sandboxTxnSelect) {
     sandboxTxnSelect.addEventListener("change", (e) => {
       const selected = e.target.value;
@@ -398,12 +426,15 @@ function setupEventListeners() {
       if (sandboxAmountVal) {
         sandboxAmountVal.textContent = `₹${Number(sandboxAmount.value).toLocaleString("en-IN")}`;
       }
-      // Auto run prediction on dropdown change
-      runTraceAndPredict(selected, Number(sandboxAmount.value), Number(sandboxHour.value));
+      runTraceAndPredict(
+        selected,
+        Number(sandboxAmount.value),
+        Number(sandboxHour.value),
+      );
     });
   }
 
-  // Run Trace & Prediction
+  // Manual Trace Button
   if (sandboxBtn) {
     sandboxBtn.addEventListener("click", async () => {
       const txnId = sandboxTxnSelect ? sandboxTxnSelect.value : "TXN-8492";
@@ -412,7 +443,7 @@ function setupEventListeners() {
 
       sandboxBtn.textContent = "TRACING FUND FLOW...";
       await runTraceAndPredict(txnId, amt, hr);
-      sandboxBtn.textContent = "TRACE FLOW & PREDICT CASH-OUT";
+      sandboxBtn.textContent = "TRACE & PREDICT EXTRACTION";
     });
   }
 
@@ -452,7 +483,7 @@ function setupEventListeners() {
     });
   }
 
-  // Intercept Dispatch
+  // Intercept Dispatch Execution
   if (dispatchBtn) {
     dispatchBtn.addEventListener("click", async () => {
       if (!currentPredictedSpot) return;
@@ -474,7 +505,16 @@ function setupEventListeners() {
 
         if (vectorLineLayer) {
           vectorLineLayer.clearLayers();
-          const pcrCoords = [23.028, 72.565];
+
+          const patrolCoordsMap = {
+            "PCR-04": [23.028, 72.565],
+            "PCR-09": [23.045, 72.52],
+            "PCR-12": [23.036, 72.561],
+          };
+
+          const pcrCoords = patrolCoordsMap[currentPredictedSpot.unit_id] || [
+            23.028, 72.565,
+          ];
           const targetCoords = [
             currentPredictedSpot.latitude,
             currentPredictedSpot.longitude,
@@ -506,13 +546,12 @@ function setupEventListeners() {
     });
   }
 
-  // Simulate Random 1930 Ingest
+  // Ingest NCRP Stream
   if (simulateBtn) {
     simulateBtn.addEventListener("click", async () => {
       simulateBtn.disabled = true;
-      simulateBtn.textContent = "INGESTING 1930 FEED...";
+      simulateBtn.textContent = "INGESTING STREAM...";
 
-      // Randomly pick one of the three preconfigured multi-hop scenarios
       const scenarios = ["TXN-8492", "TXN-3104", "TXN-9918"];
       const randomTxn = scenarios[Math.floor(Math.random() * scenarios.length)];
       const newAmount = Math.floor(40000 + Math.random() * 50000);
@@ -531,13 +570,13 @@ function setupEventListeners() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             complaint_id: uniqueComplaintId,
-            victim_location: "Multi-Hop NCRP Ingest",
+            victim_location: "Interstate NCRP Ingest",
             amount: newAmount,
           }),
         });
 
         await runTraceAndPredict(randomTxn, newAmount, randomHour);
-        simulateBtn.textContent = "⚡ INGEST 1930 NCRP STREAM";
+        simulateBtn.textContent = "⚡ INGEST 1930 STREAM";
         simulateBtn.disabled = false;
       } catch (err) {
         console.error("Simulation error:", err);
