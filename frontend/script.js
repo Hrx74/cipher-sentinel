@@ -254,7 +254,7 @@ function renderHotspots(hotspots, activeAmount = 85000) {
       targetConfidence.textContent = `${Math.round((currentPredictedSpot.confidence ?? 1.0) * 100)}%`;
     if (targetFraudProb) {
       const probVal = Number(currentPredictedSpot.fraud_prob);
-      const safeProb = (!isNaN(probVal) && probVal > 0.1) ? probVal : 0.984;
+      const safeProb = !isNaN(probVal) && probVal > 0.1 ? probVal : 0.984;
       targetFraudProb.textContent = `${(safeProb * 100).toFixed(1)}%`;
     }
     if (targetCash)
