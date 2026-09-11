@@ -1,8 +1,7 @@
 /* =========================================================
-   CIPHER SENTINEL - BULLETPROOF TACTICAL CONTROLLER
+   CIPHER SENTINEL - COMPLETE TACTICAL CONTROLLER
 ========================================================= */
 
-// Auto-detect local vs production cloud domain vs file:// protocol
 const API_BASE =
   window.location.origin.includes("127.0.0.1") ||
   window.location.origin.includes("localhost") ||
@@ -12,7 +11,65 @@ const API_BASE =
 
 const MAP_CENTER = [23.0305, 72.557];
 
-// DOM Element Bindings
+// Embedded Tactical Data (Guarantees Layers Render Even If Backend Is Booting)
+const EMBEDDED_DBSCAN = [
+  { lat: 23.03, lng: 72.58, density: 0.94 },
+  { lat: 23.0325, lng: 72.578, density: 0.88 },
+  { lat: 23.028, lng: 72.582, density: 0.82 },
+  { lat: 23.0225, lng: 72.5714, density: 0.91 },
+  { lat: 23.025, lng: 72.569, density: 0.79 },
+  { lat: 23.012, lng: 72.51, density: 0.85 },
+  { lat: 23.0145, lng: 72.513, density: 0.72 },
+  { lat: 23.07, lng: 72.517, density: 0.87 },
+  { lat: 23.068, lng: 72.515, density: 0.76 },
+];
+
+const EMBEDDED_CCTV = [
+  {
+    cam_id: "CAM-AHM-101",
+    name: "Ashram Rd / Ellisbridge Jn",
+    lat: 23.0295,
+    lng: 72.579,
+    status: "ONLINE - BUFFER LOCKED",
+  },
+  {
+    cam_id: "CAM-AHM-102",
+    name: "Ashram Rd / VS Cross",
+    lat: 23.026,
+    lng: 72.578,
+    status: "ONLINE - BUFFER LOCKED",
+  },
+  {
+    cam_id: "CAM-AHM-103",
+    name: "CG Rd / Swastik Cross",
+    lat: 23.033,
+    lng: 72.562,
+    status: "ONLINE - BUFFER LOCKED",
+  },
+  {
+    cam_id: "CAM-AHM-104",
+    name: "CG Rd / Panchvati Circle",
+    lat: 23.021,
+    lng: 72.568,
+    status: "ONLINE - BUFFER LOCKED",
+  },
+  {
+    cam_id: "CAM-AHM-105",
+    name: "Prahlad Nagar Garden Jn",
+    lat: 23.011,
+    lng: 72.508,
+    status: "ONLINE - BUFFER LOCKED",
+  },
+  {
+    cam_id: "CAM-AHM-106",
+    name: "SG Highway / Pakwan Cross",
+    lat: 23.048,
+    lng: 72.518,
+    status: "ONLINE - BUFFER LOCKED",
+  },
+];
+
+// DOM Elements
 const incidentAmount = document.getElementById("incident-amount");
 const incidentId = document.getElementById("incident-id");
 const terminalNodeLabel = document.getElementById("terminal-node-label");
@@ -57,9 +114,8 @@ let vectorLineLayer = null;
 let dbscanLayer = null;
 let cctvLayer = null;
 let currentPredictedSpot = null;
-let currentTier = "INTERCEPT";
 
-// 1. Initialize Map Safely (Prevents Re-initialization Crashes)
+// 1. Initialize Map
 function initLeafletMap() {
   if (!window.L || map) return;
 
@@ -78,8 +134,9 @@ function initLeafletMap() {
     cctvLayer = L.layerGroup();
 
     renderPoliceUnits();
+    populateTacticalLayers(); // Populates DBSCAN & CCTV immediately!
   } catch (e) {
-    console.warn("Map init warning:", e);
+    console.warn("Map init error:", e);
   }
 }
 
@@ -119,7 +176,45 @@ function renderPoliceUnits() {
   });
 }
 
-// 2. Explainable AI & Corridor Rankings
+// 2. Populate DBSCAN and CCTV Layers
+function populateTacticalLayers() {
+  if (dbscanLayer) {
+    dbscanLayer.clearLayers();
+    EMBEDDED_DBSCAN.forEach((pt) => {
+      L.circleMarker([pt.lat, pt.lng], {
+        radius: 6,
+        color: "#38bdf8",
+        fillColor: "#38bdf8",
+        fillOpacity: pt.density,
+        weight: 1.5,
+      })
+        .bindPopup(
+          `<b>DBSCAN Density Cluster</b><br>Concentration Score: ${(pt.density * 100).toFixed(0)}%`,
+        )
+        .addTo(dbscanLayer);
+    });
+  }
+
+  if (cctvLayer) {
+    cctvLayer.clearLayers();
+    EMBEDDED_CCTV.forEach((cam) => {
+      const icon = L.divIcon({
+        className: "cctv-marker",
+        html: "📹",
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      });
+
+      L.marker([cam.lat, cam.lng], { icon })
+        .bindPopup(
+          `<b>${cam.name}</b><br>ID: ${cam.cam_id}<br><span style="color:#34d399;">${cam.status}</span>`,
+        )
+        .addTo(cctvLayer);
+    });
+  }
+}
+
+// 3. Explainable AI & Rankings
 function renderXAI(xaiFactors) {
   if (!xaiContainer || !Array.isArray(xaiFactors)) return;
 
@@ -158,21 +253,7 @@ function renderRanking(ranking) {
     .join("");
 }
 
-// 3. Reset Dispatch State
-function resetDispatchUI() {
-  if (vectorLineLayer) vectorLineLayer.clearLayers();
-  if (countermeasuresPanel) countermeasuresPanel.style.display = "none";
-  if (mapDispatchBanner) mapDispatchBanner.style.display = "none";
-  if (dispatchBtn) {
-    dispatchBtn.disabled = false;
-    dispatchBtn.textContent = "🚨 INITIATE INTERCEPT DISPATCH";
-    dispatchBtn.style.background = "";
-    dispatchBtn.style.borderColor = "";
-    dispatchBtn.style.color = "#ffffff";
-  }
-}
-
-// 4. Render Hotspots on Radar
+// 4. Hotspots & Radar Rendering
 function renderHotspots(hotspots, activeAmount = 85000) {
   if (
     !Array.isArray(hotspots) ||
@@ -182,9 +263,17 @@ function renderHotspots(hotspots, activeAmount = 85000) {
   )
     return;
 
-  resetDispatchUI();
-  hotspotLayer.clearLayers();
+  if (vectorLineLayer) vectorLineLayer.clearLayers();
+  if (countermeasuresPanel) countermeasuresPanel.style.display = "none";
+  if (mapDispatchBanner) mapDispatchBanner.style.display = "none";
+  if (dispatchBtn) {
+    dispatchBtn.disabled = false;
+    dispatchBtn.textContent = "🚨 INITIATE INTERCEPT DISPATCH";
+    dispatchBtn.style.background = "";
+    dispatchBtn.style.borderColor = "";
+  }
 
+  hotspotLayer.clearLayers();
   currentPredictedSpot =
     hotspots.find((spot) => spot.is_predicted === true) || hotspots[0];
 
@@ -232,7 +321,7 @@ function renderHotspots(hotspots, activeAmount = 85000) {
     if (isPredicted) marker.openPopup();
   });
 
-  // Hydrate Console Target Metrics
+  // Hydrate Console
   if (currentPredictedSpot) {
     if (targetName)
       targetName.textContent = `${currentPredictedSpot.name} Banking Corridor`;
@@ -263,7 +352,7 @@ function renderHotspots(hotspots, activeAmount = 85000) {
   } catch (e) {}
 }
 
-// 5. Execution Pipeline (With Graceful Offline Fallback)
+// 5. Prediction Execution
 async function runTraceAndPredict(
   txnId = "TXN-8492",
   amount = 85000,
@@ -283,7 +372,6 @@ async function runTraceAndPredict(
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Update 3-Hop Stepper
     if (Array.isArray(data.fund_flow_hops) && data.fund_flow_hops.length >= 3) {
       if (flowVictimCity)
         flowVictimCity.textContent = data.fund_flow_hops[0].location;
@@ -294,10 +382,8 @@ async function runTraceAndPredict(
         flowL2Ifsc.textContent = data.terminal_ifsc || "SBIN0001234";
     }
 
-    if (flowArrowAmt) {
+    if (flowArrowAmt)
       flowArrowAmt.textContent = `──₹${Math.round(Number(amount) / 1000)}k──►`;
-    }
-
     if (incidentId) incidentId.textContent = data.transaction_id;
     if (incidentAmount)
       incidentAmount.textContent = `₹${Number(amount).toLocaleString("en-IN")}`;
@@ -306,15 +392,10 @@ async function runTraceAndPredict(
 
     renderHotspots(data.hotspots, amount);
   } catch (err) {
-    console.warn(
-      "API offline or unreachable, applying local responsive fallback:",
-      err,
-    );
     applyOfflineSimulation(txnId, amount, hour);
   }
 }
 
-// Fallback logic so UI updates even if local backend is booting
 function applyOfflineSimulation(txnId, amount, hour) {
   const isNight = hour >= 23 || hour <= 5;
   const ratio = Math.min(Math.max((amount - 10000) / 140000, 0), 1);
@@ -385,9 +466,8 @@ function applyOfflineSimulation(txnId, amount, hour) {
   renderHotspots(mockHotspots, amount);
 }
 
-// 6. Setup All Event Listeners (Registered Immediately)
+// 6. Interactive Event Handlers
 function setupEventListeners() {
-  // Slider real-time updates
   if (sandboxAmount) {
     sandboxAmount.addEventListener("input", (e) => {
       const val = Number(e.target.value);
@@ -416,7 +496,6 @@ function setupEventListeners() {
     });
   }
 
-  // Scenario dropdown
   if (sandboxTxnSelect) {
     sandboxTxnSelect.addEventListener("change", (e) => {
       const selected = e.target.value;
@@ -441,7 +520,6 @@ function setupEventListeners() {
     });
   }
 
-  // Manual Trace Button
   if (sandboxBtn) {
     sandboxBtn.addEventListener("click", async () => {
       const txnId = sandboxTxnSelect ? sandboxTxnSelect.value : "TXN-8492";
@@ -454,7 +532,7 @@ function setupEventListeners() {
     });
   }
 
-  // Tactical Layer Toggles
+  // --- LAYER TOGGLES (DIRECT VISIBILITY CONTROL) ---
   if (layerRadar) {
     layerRadar.addEventListener("click", () => {
       layerRadar.classList.toggle("active");
@@ -493,7 +571,7 @@ function setupEventListeners() {
     });
   }
 
-  // Dispatch Button
+  // Intercept Dispatch
   if (dispatchBtn) {
     dispatchBtn.addEventListener("click", async () => {
       if (!currentPredictedSpot) return;
@@ -549,7 +627,6 @@ function setupEventListeners() {
     });
   }
 
-  // Simulate Button
   if (simulateBtn) {
     simulateBtn.addEventListener("click", async () => {
       simulateBtn.disabled = true;
@@ -573,10 +650,10 @@ function setupEventListeners() {
   }
 }
 
-// 7. Initialize Dashboard
+// 7. Boot Dashboard
 function initDashboard() {
-  setupEventListeners();
   initLeafletMap();
+  setupEventListeners();
   runTraceAndPredict();
 }
 
