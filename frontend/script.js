@@ -196,8 +196,12 @@ function renderHotspots(hotspots, activeAmount = 85000) {
     return;
 
   hotspotLayer.clearLayers();
-  currentPredictedSpot =
-    hotspots.find((spot) => spot.is_predicted === true) || hotspots[0];
+
+  // Find the exact predicted spot flagged by backend
+  currentPredictedSpot = hotspots.find((spot) => spot.is_predicted === true);
+  if (!currentPredictedSpot) {
+    currentPredictedSpot = hotspots[0];
+  }
 
   renderRanking(hotspots);
   if (currentPredictedSpot?.xai_factors) {
@@ -391,7 +395,11 @@ function setupEventListeners() {
         sandboxAmount.value = "120000";
         sandboxHour.value = "2";
       }
-      sandboxAmountVal.textContent = `₹${Number(sandboxAmount.value).toLocaleString("en-IN")}`;
+      if (sandboxAmountVal) {
+        sandboxAmountVal.textContent = `₹${Number(sandboxAmount.value).toLocaleString("en-IN")}`;
+      }
+      // Auto run prediction on dropdown change
+      runTraceAndPredict(selected, Number(sandboxAmount.value), Number(sandboxHour.value));
     });
   }
 
