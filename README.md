@@ -7,3 +7,5 @@ Real-Time 1930 Cyber Fraud Hotspot Prediction & Law Enforcement Tactical Interce
 - ML Inference: XGBoost, Scikit-learn
 - Geospatial Radar: Leaflet.js
 - Operations: NCRP 1930 Ingestion, Haversine Patrol Routing, Dynamic XAI
+
+https://cipher-sentinel-wzpe.onrender.com/
