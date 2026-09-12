@@ -1,34 +1,34 @@
 ﻿# 🛡️ Cipher Sentinel
 
-> Tactical intercept console that predicts cyber fraud ATM cash-out hotspots and alerts patrol units before stolen funds are withdrawn[cite: 1, 2].
+> Tactical intercept console that predicts cyber fraud ATM cash-out hotspots and alerts patrol units before stolen funds are withdrawn.
 
-🔗 **Live Demo:** [cipher-sentinel-wzpe.onrender.com](https://cipher-sentinel-wzpe.onrender.com/)[cite: 2]
+🔗 **Live Demo:** [cipher-sentinel-wzpe.onrender.com](https://cipher-sentinel-wzpe.onrender.com/)
 
 ---
 
 ## What It Does
 
-When financial fraud is reported on the **1930 helpline**, syndicates typically extract physical cash from ATMs within a 15–45 minute window[cite: 1, 2].
+When financial fraud is reported on the **1930 helpline**, syndicates typically extract physical cash from ATMs within a 15–45 minute window.
 
-**Cipher Sentinel** bridges digital complaint data with street-level police interdiction: it traces the money mule trail, runs machine learning to predict which banking corridor will be hit, and calculates the fastest police patrol intercept route[cite: 1, 2].
+**Cipher Sentinel** bridges digital complaint data with street-level police interdiction: it traces the money mule trail, runs machine learning to predict which banking corridor will be hit, and calculates the fastest police patrol intercept route.
 
 ---
 
 ## Core Features
 
-- **Fund-Flow Graph:** Traces money movement across hops (Victim ➔ Transit Mule ➔ Terminal Cash-Out Node)[cite: 1, 2].
-- **Dual ML Pipeline:** Calibrated XGBoost models that score fraud severity and predict the target commercial ATM corridor[cite: 1, 2].
-- **Tactical Radar Map:** Interactive Leaflet.js map with DBSCAN hotspot clusters, junction CCTV nodes, and live patrol van tracking[cite: 1, 2].
-- **Resource Triage Matrix:** Dispatches PCR vans only when threat is high and ETA is under 10 minutes[cite: 1, 2]; defaults to CCTV buffer locks for secondary alerts to avoid false alarms[cite: 1, 2].
+- **Fund-Flow Graph:** Traces money movement across hops (Victim ➔ Transit Mule ➔ Terminal Cash-Out Node).
+- **Dual ML Pipeline:** Calibrated XGBoost models that score fraud severity and predict the target commercial ATM corridor.
+- **Tactical Radar Map:** Interactive Leaflet.js map with DBSCAN hotspot clusters, junction CCTV nodes, and live patrol van tracking.
+- **Resource Triage Matrix:** Dispatches PCR vans only when threat is high and ETA is under 10 minutes; defaults to CCTV buffer locks for secondary alerts to avoid false alarms.
 
 ---
 
 ## Tech Stack
 
-- **Backend:** FastAPI (Python), Uvicorn[cite: 2]
-- **ML & Analytics:** XGBoost, Scikit-learn (DBSCAN Spatial Clustering)[cite: 2]
-- **Geospatial & UI:** Leaflet.js, HTML5/CSS3, JavaScript[cite: 2]
-- **Data Layer:** SQLite (Edge prototype) & SQLAlchemy[cite: 2]
+- **Backend:** FastAPI (Python), Uvicorn
+- **ML & Analytics:** XGBoost, Scikit-learn (DBSCAN Spatial Clustering)
+- **Geospatial & UI:** Leaflet.js, HTML5/CSS3, JavaScript
+- **Data Layer:** SQLite (Edge prototype) & SQLAlchemy
 
 ---
 
